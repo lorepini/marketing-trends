@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCQ Trainer</title>
+
+<!--
+================================================================================
+  MCQ TRAINER — reusable across subjects
+================================================================================
+
+  HOW TO MAKE A VERSION FOR ANOTHER SUBJECT:
+    1. Copy this file (e.g. "mcq_trainer_marketing.html")
+    2. Replace the contents of <script id="quiz-data"> below with your own JSON
+       following the same schema (subject, subjectId, blocks → questions)
+    3. That's it — open in a browser, works offline. Progress is stored per
+       subjectId in localStorage so different subjects don't collide.
+
+  QUESTION SCHEMA:
+    {
+      "subject":   "<display name>",
+      "subjectId": "<unique slug, used for localStorage>",
+      "blocks": [
+        {
+          "id":    "<unique short id>",
+          "title": "<displayed on home tile>",
+          "questions": [
+            {
+              "q": "<question text>",
+              "options": ["A text", "B text", "C text", "D text"],
+              "answer": <0-based index of the correct option>,
+              "rationale": "<one-line explanation shown after answering>"
+            },
+            ...
+          ]
+        },
+        ...
+      ]
+    }
+================================================================================
+-->
+
+<style>
+:root{
+  --bg:#f7f8fa;
+  --panel:#ffffff;
+  --ink:#1f2937;
+  --muted:#6b7280;
+  --line:#e5e7eb;
+  --accent:#2563eb;
+  --accent-soft:#dbeafe;
+  --good:#16a34a;
+  --good-soft:#dcfce7;
+  --bad:#dc2626;
+  --bad-soft:#fee2e2;
+  --gold:#d97706;
+  --silver:#9ca3af;
+  --bronze:#b45309;
+  --radius:12px;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 12px rgba(0,0,0,.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Atkinson Hyperlegible','Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  transition:background-color .25s ease;
+}
+body.flash-good{background:var(--good-soft)}
+body.flash-bad{background:var(--bad-soft)}
+
+.app{max-width:880px;margin:0 auto;padding:32px 20px 80px}
+
+/* ---------- top bar ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.topbar h1{font-size:1.4rem;font-weight:700;letter-spacing:-.01em}
+.topbar .sub{color:var(--muted);font-size:.85rem;margin-top:2px}
+.home-btn{
+  appearance:none;background:none;border:1px solid var(--line);
+  font:inherit;color:var(--muted);cursor:pointer;
+  padding:6px 12px;border-radius:8px;font-size:.85rem;font-weight:600;
+}
+.home-btn:hover{background:#fff;color:var(--ink)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.timer{
+  display:inline-flex;align-items:center;gap:6px;
+  font-variant-numeric:tabular-nums;font-weight:700;font-size:.92rem;
+  color:var(--ink);padding:6px 12px;border-radius:8px;
+  background:#f3f4f6;border:1px solid var(--line);min-width:78px;justify-content:center;
+}
+.timer.paused{color:var(--muted);background:#fafafa}
+.timer .dot{
+  width:6px;height:6px;border-radius:50%;background:var(--good);
+  animation:pulse 1.4s ease-in-out infinite;
+}
+.timer.paused .dot{background:var(--muted);animation:none}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ---------- screens ---------- */
+.screen{display:none;animation:fade .25s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ---------- home: medal shelf ---------- */
+.medal-shelf{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;margin-bottom:20px;box-shadow:var(--shadow);
+}
+.medal-shelf h2{font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
+.medal-row{display:flex;flex-wrap:wrap;gap:10px}
+.medal{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 12px;border-radius:999px;
+  background:#fef9e6;border:1px solid #fde68a;
+  font-size:.82rem;font-weight:600;color:#92400e;
+}
+.medal .ic{font-size:1.05rem;line-height:1}
+.medal.empty{background:#f3f4f6;border-color:var(--line);color:#9ca3af}
+.medal.silver{background:#f3f4f6;border-color:#d1d5db;color:#374151}
+.medal.bronze{background:#fef3c7;border-color:#fcd34d;color:#92400e}
+
+/* ---------- home: block tiles ---------- */
+.tile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.tile{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 18px 16px;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;
+  box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:10px;text-align:left;
+  font:inherit;color:inherit;appearance:none;
+}
+.tile:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.08);border-color:#cbd5e1}
+.tile-title{font-weight:700;font-size:1rem;color:var(--ink)}
+.tile-meta{font-size:.8rem;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.tile-medals{display:flex;gap:6px;flex-wrap:wrap;min-height:22px}
+.tile-medals .medal{padding:3px 8px;font-size:.72rem}
+.tile.mixed{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border-color:transparent}
+.tile.mixed .tile-title{color:#fff}
+.tile.mixed .tile-meta{color:rgba(255,255,255,.85)}
+
+/* ---------- quiz ---------- */
+.progress-wrap{margin-bottom:18px}
+.progress-bar{height:8px;background:var(--line);border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);transition:width .35s ease;width:0%}
+.progress-meta{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-top:6px}
+
+.question-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:28px 28px 24px;box-shadow:var(--shadow);
+}
+.q-text{font-size:1.08rem;font-weight:600;line-height:1.5;margin-bottom:22px;color:var(--ink)}
+.options{display:grid;gap:10px}
+.opt{
+  display:block;width:100%;text-align:left;
+  padding:14px 16px;border:1.5px solid var(--line);border-radius:10px;
+  background:#fff;font:inherit;font-size:.96rem;color:var(--ink);
+  cursor:pointer;transition:border-color .12s ease,background-color .12s ease,transform .08s ease;
+}
+.opt:hover:not(:disabled){border-color:var(--accent);background:#f8fafc}
+.opt:active:not(:disabled){transform:scale(.998)}
+.opt:disabled{cursor:default;opacity:.95}
+.opt .letter{
+  display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;
+  background:#f3f4f6;border-radius:6px;font-weight:700;font-size:.78rem;margin-right:10px;color:var(--muted);
+}
+.opt.correct{border-color:var(--good);background:var(--good-soft)}
+.opt.correct .letter{background:var(--good);color:#fff}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt.wrong .letter{background:var(--bad);color:#fff}
+
+.feedback{margin-top:18px;display:none}
+.feedback.show{display:block;animation:fade .2s ease}
+.feedback .verdict{font-weight:700;font-size:1.02rem;margin-bottom:6px}
+.feedback.good .verdict{color:var(--good)}
+.feedback.bad .verdict{color:var(--bad)}
+.feedback .rationale{color:#374151;font-size:.92rem}
+.feedback .next-btn{
+  margin-top:14px;appearance:none;border:none;
+  background:var(--accent);color:#fff;font:inherit;font-weight:600;
+  padding:10px 22px;border-radius:8px;cursor:pointer;font-size:.92rem;
+}
+.feedback .next-btn:hover{background:#1d4ed8}
+
+/* ---------- break modal ---------- */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;
+  align-items:center;justify-content:center;padding:24px;z-index:50;
+  animation:fade .2s ease;
+}
+.modal-backdrop.show{display:flex}
+.modal{
+  background:#fff;border-radius:var(--radius);max-width:420px;width:100%;
+  padding:28px 24px 22px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.18);
+}
+.modal h3{font-size:1.2rem;margin-bottom:8px}
+.modal p{color:var(--muted);font-size:.92rem;margin-bottom:18px}
+.modal .row{display:flex;gap:10px;justify-content:center}
+.modal button{
+  appearance:none;border:none;font:inherit;font-weight:600;
+  padding:10px 20px;border-radius:8px;cursor:pointer;font-size:.92rem;
+}
+.modal .primary{background:var(--accent);color:#fff}
+.modal .primary:hover{background:#1d4ed8}
+.modal .ghost{background:#f3f4f6;color:var(--ink)}
+.modal .ghost:hover{background:#e5e7eb}
+
+/* ---------- end screen ---------- */
+.end-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:32px 28px;text-align:center;box-shadow:var(--shadow);
+}
+.end-card h2{font-size:1.4rem;margin-bottom:6px}
+.end-card .sub{color:var(--muted);margin-bottom:22px}
+.end-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}
+.end-stat{background:#f8fafc;border-radius:10px;padding:14px 6px}
+.end-stat .v{font-size:1.6rem;font-weight:700;color:var(--ink)}
+.end-stat .l{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.earned-medals{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:8px 0 22px}
+.earned-medals:empty{display:none}
+.earned-medals .medal{font-size:.9rem;padding:8px 14px}
+.end-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.end-actions button{
+  appearance:none;border:none;font:inherit;font-weight:600;
+  padding:10px 22px;border-radius:8px;cursor:pointer;font-size:.92rem;
+}
+.end-actions .primary{background:var(--accent);color:#fff}
+.end-actions .primary:hover{background:#1d4ed8}
+.end-actions .ghost{background:#f3f4f6;color:var(--ink)}
+.end-actions .ghost:hover{background:#e5e7eb}
+
+@media (max-width:500px){
+  .app{padding:18px 14px 60px}
+  .question-card{padding:20px 18px}
+  .q-text{font-size:1rem}
+  .opt{font-size:.92rem;padding:12px 14px}
+  .end-stats{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     QUESTION DATA — replace this block to make a new subject
+     ============================================================ -->
+<script id="quiz-data" type="application/json">
+{
+  "subject": "Marketing Trends",
+  "subjectId": "mkt_trends_2025",
+  "blocks": [
+    {
+      "id": "m1",
+      "title": "Mock 1 · simulacre",
+      "questions": [
+        {
+          "q": "According to the 8 Ms framework, the human role in AI marketing is to:",
+          "options": [
+            "Provide creativity, strategic vision and lead the smart machines",
+            "Co-lead the strategic decisions together with the machines on equal footing",
+            "Refine the algorithmic outputs once the model has set the direction"
+          ],
+          "answer": 0,
+          "rationale": "8 Ms: humans LEAD with creativity/strategy; machines bring certainty in data. They do not co-lead and humans are not downstream of the model."
+        },
+        {
+          "q": "La estrategia del océano azul se basa en:",
+          "options": [
+            "Crear nueva demanda y dirigirse a los no-clientes",
+            "Diferenciarse de los competidores manteniendo la estructura del sector",
+            "Reducir el coste para batir a la competencia en el espacio existente"
+          ],
+          "answer": 0,
+          "rationale": "Blue Ocean rompe la frontera valor/coste y se dirige a no-clientes. Diferenciarse dentro del sector o competir en coste son movimientos típicos de Red Ocean."
+        },
+        {
+          "q": "One of the main advantages of using international brands (vs purely global) is:",
+          "options": [
+            "Highest possible economies of scale across all markets",
+            "Total freedom to redesign the brand identity country by country",
+            "Balance between brand consistency and local adaptation"
+          ],
+          "answer": 2,
+          "rationale": "International brands trade some scale for some adaptation — that balance is the advantage. Pure scale is the advantage of global brands; full local freedom is the advantage of local brands."
+        },
+        {
+          "q": "La realidad virtual (VR) se diferencia de la realidad aumentada (AR) en que:",
+          "options": [
+            "La VR reemplaza el entorno con un mundo simulado, la AR lo enriquece",
+            "Ambas reemplazan el entorno, pero la AR lo hace de forma parcial",
+            "La VR superpone información digital sobre objetos reales; la AR no"
+          ],
+          "answer": 0,
+          "rationale": "VR sustituye el entorno; AR lo enriquece añadiendo capas digitales. La opción 1 confunde a la AR con una VR parcial; la 2 invierte ambos conceptos."
+        },
+        {
+          "q": "Según la presentación de Reckitt Benckiser, su modelo de crecimiento se sustenta en:",
+          "options": [
+            "Inversión en innovación y construcción de brand equity sólido",
+            "Adquisición continua de marcas locales para entrar en nuevos mercados",
+            "Liderazgo en costes apoyado en una cadena de suministro centralizada"
+          ],
+          "answer": 0,
+          "rationale": "RB ancla su crecimiento en innovación + brand equity. M&A y liderazgo en costes son palancas plausibles pero no el eje del modelo expuesto en la presentación."
+        },
+        {
+          "q": "Why do companies need innovation?",
+          "options": [
+            "To deliver a superior value proposition versus the competition",
+            "To defend market share by matching competitor product launches",
+            "To shorten payback periods on existing R&D investments"
+          ],
+          "answer": 0,
+          "rationale": "From a marketing perspective innovation exists to create superior value — the source of competitive advantage. Defensive parity and ROI on R&D are operational consequences, not the marketing rationale."
+        },
+        {
+          "q": "Una de las principales desventajas de las marcas globales es:",
+          "options": [
+            "Pierden la ventaja de escala cuando el portafolio crece demasiado",
+            "Su identidad legal queda menos protegida en mercados emergentes",
+            "La dispersión de la imagen entre culturas y la falta de adaptación local"
+          ],
+          "answer": 2,
+          "rationale": "El precio que pagan las marcas globales es la pérdida de cercanía cultural y la dispersión de la imagen entre mercados. No pierden escala con el tamaño del portafolio ni tienen menos protección legal."
+        },
+        {
+          "q": "The value equation for customers can be expressed as:",
+          "options": [
+            "The ratio between perceived benefits and perceived sacrifices",
+            "Perceived quality minus the price paid at the moment of purchase",
+            "The gap between brand expectations and post-purchase satisfaction"
+          ],
+          "answer": 0,
+          "rationale": "Value = benefits ÷ sacrifices. The second option mixes quality and price (a different model); the third describes the satisfaction gap, not value."
+        },
+        {
+          "q": "En el marketplace actual, las empresas se enfrentan a:",
+          "options": [
+            "Competencia global intensa y consumidores más exigentes a la vez",
+            "Saturación de oferta acompañada de consumidores más predecibles",
+            "Fragmentación regional y descenso de la presión competitiva global"
+          ],
+          "answer": 0,
+          "rationale": "El marketplace actual combina competencia global intensa con consumidores sofisticados. La previsibilidad o el descenso de la presión competitiva contradicen el contexto descrito en el curso."
+        },
+        {
+          "q": "A radical innovation, from a marketing perspective, is:",
+          "options": [
+            "An invention that opens a new technological possibility regardless of use",
+            "An incremental improvement that delivers measurable extra benefit",
+            "A solution that changes consumption patterns and creates a trend"
+          ],
+          "answer": 2,
+          "rationale": "Marketing radical innovation = cambia patrones de consumo y crea tendencia. La opción 0 confunde radical con invento técnico; la 1 describe la innovación incremental."
+        },
+        {
+          "q": "La estrategia GloCal busca:",
+          "options": [
+            "Estandarizar el producto para todos los mercados manteniendo la marca local",
+            "Trasladar las decisiones operativas a cada filial nacional autónoma",
+            "Equilibrio entre la estrategia global y la adaptación local"
+          ],
+          "answer": 2,
+          "rationale": "GloCal = pensar global y actuar local manteniendo coherencia. La opción 0 es estandarización con cosmética local; la 1 es pura descentralización (estrategia local)."
+        },
+        {
+          "q": "What is augmented or mixed reality?",
+          "options": [
+            "A fully immersive environment that isolates the user from the real world",
+            "A 2D filter applied on top of video without any spatial awareness",
+            "An enhancement of the real world by adding digital information"
+          ],
+          "answer": 2,
+          "rationale": "AR/MR enhance the real world. The first option describes VR; the second describes a flat filter, not AR (AR requires spatial integration)."
+        },
+        {
+          "q": "El brand portfolio de la mayoría de empresas globales consiste en:",
+          "options": [
+            "Una marca paraguas única extendida a todas las categorías",
+            "Marcas internacionales en países desarrollados y locales en emergentes",
+            "Una combinación de marcas globales, internacionales y locales"
+          ],
+          "answer": 2,
+          "rationale": "El portafolio típico combina los tres niveles. La opción 0 es la estrategia de monomarca (P&G evitada); la 1 es una simplificación geográfica que no se sostiene."
+        },
+        {
+          "q": "According to the Lenovo presentation, the \"blind strategy\" was based on:",
+          "options": [
+            "Launching products without external market validation before scale",
+            "Pricing aggressively to win share before any brand recognition was built",
+            "Increasing sales volume to negotiate better supplier costs"
+          ],
+          "answer": 2,
+          "rationale": "Blind strategy = volumen primero para arrancar economías de coste con proveedores. Las otras opciones suenan plausibles pero describen estrategias distintas (skim/penetration)."
+        },
+        {
+          "q": "El marketing en redes sociales consiste fundamentalmente en:",
+          "options": [
+            "Construir audiencias para luego monetizarlas con publicidad pagada",
+            "Coordinar el funnel de ventas a través de campañas de performance",
+            "Combinar relaciones públicas con gestión de la reputación social"
+          ],
+          "answer": 2,
+          "rationale": "SMM = PR + gestión de reputación en lo conversacional. Las otras dos describen tácticas de adquisición (audience-building, performance), no el núcleo del enfoque."
+        },
+        {
+          "q": "Globalization in modern marketing primarily means:",
+          "options": [
+            "Replicating the home-market positioning in every new geography",
+            "Building separate brand strategies country by country to maximize fit",
+            "Having a global vision while cultivating local roots and identities"
+          ],
+          "answer": 2,
+          "rationale": "Globalización moderna = visión global con raíces locales. La opción 0 es exportación pura; la 1 es estrategia local atomizada — ninguna captura la idea del 'plural'."
+        },
+        {
+          "q": "¿Qué decisiones deben tomarse antes de entrar en mercados internacionales?",
+          "options": [
+            "Dónde, cuándo y cómo entrar en cada nuevo mercado",
+            "Qué socios locales elegir y qué precio establecer en cada país",
+            "Qué adaptaciones del producto serán necesarias antes del lanzamiento"
+          ],
+          "answer": 0,
+          "rationale": "Las tres decisiones marco son dónde, cuándo y cómo entrar. Las otras opciones son decisiones tácticas que se derivan después de fijar ese marco."
+        },
+        {
+          "q": "From the customer's perspective, marketing is essentially:",
+          "options": [
+            "A function that pushes products from the firm into the market",
+            "A provider of value that makes consumers feel better and solve needs",
+            "A communication discipline that builds awareness around brands"
+          ],
+          "answer": 1,
+          "rationale": "Customer POV: marketing = proveedor de valor. La opción 0 es la visión productiva (push); la 2 es solo una parte (la P de promoción)."
+        },
+        {
+          "q": "Una de las principales ventajas de las marcas locales es:",
+          "options": [
+            "Aprovechan automáticamente la imagen del país de origen como aval",
+            "Tienen un nombre con significado y cercanía cultural",
+            "Pueden trasladar fácilmente su posicionamiento a mercados vecinos"
+          ],
+          "answer": 1,
+          "rationale": "Las marcas locales ganan en significado y cercanía cultural. El country-of-origin no es automático y la trasladabilidad es justo la ventaja que NO tienen."
+        },
+        {
+          "q": "Limiting factors to product standardization include, among others:",
+          "options": [
+            "Cultural and social differences between target markets",
+            "The push for scale efficiency demanded by global investors",
+            "The lack of harmonization across distribution channels"
+          ],
+          "answer": 0,
+          "rationale": "Lo que LIMITA la estandarización es lo cultural y social. La presión por escala (opción 1) empuja en la dirección contraria; la opción 2 es operativa, no estructural."
+        },
+        {
+          "q": "Definir el público objetivo permite que la marca:",
+          "options": [
+            "Excluir definitivamente a los no-clientes del foco estratégico",
+            "Elegir qué dimensiones del valor activar para que el contenido resuene",
+            "Optimizar el coste por impacto en campañas de notoriedad masiva"
+          ],
+          "answer": 1,
+          "rationale": "Definir el target permite seleccionar dimensiones de valor a activar. No equivale a excluir no-clientes (los marketers atienden a ambos) ni se reduce a optimizar CPM."
+        },
+        {
+          "q": "The red ocean strategy focuses on:",
+          "options": [
+            "Building uncontested space by serving non-customers",
+            "Competing for current customers in existing market space",
+            "Reshaping industry boundaries by lowering cost and raising value"
+          ],
+          "answer": 1,
+          "rationale": "Red Ocean = pelea por clientes actuales en espacio existente. Las otras dos describen Blue Ocean (no-clientes y la lógica de value innovation)."
+        },
+        {
+          "q": "¿Por qué fracasó la realidad virtual en los años 90?",
+          "options": [
+            "El producto ya estaba listo pero el cliente no estaba preparado",
+            "Ni los usuarios ni los diseñadores estaban suficientemente preparados",
+            "La adopción se aceleró demasiado y desbordó la capacidad de fabricación"
+          ],
+          "answer": 1,
+          "rationale": "Falló en ambos lados a la vez — tecnología y usuarios. La opción 0 es la lectura parcial habitual; la 2 invierte el problema (no hubo demanda que desbordara nada)."
+        },
+        {
+          "q": "One of the main advantages of using global brands is:",
+          "options": [
+            "Maximum efficiency of marketing activities across all markets",
+            "Higher emotional connection with consumers in each local culture",
+            "More flexibility to reposition the brand market by market"
+          ],
+          "answer": 0,
+          "rationale": "La ventaja de las globales es la eficiencia por escala. Conexión emocional cultural y flexibilidad de reposicionamiento son ventajas de las marcas locales."
+        },
+        {
+          "q": "Las 4 P, desde el punto de vista del cliente, se reformulan como:",
+          "options": [
+            "Conexión, contenido, comunidad y conversión digital",
+            "Solución para el cliente, coste, comunicación y conveniencia",
+            "Customer experience, contexto, co-creación y comunidad"
+          ],
+          "answer": 1,
+          "rationale": "Las 4 Cs clásicas de Lauterborn: Customer solution, Cost, Communication, Convenience. Las otras opciones son frameworks distintos posteriores."
+        },
+        {
+          "q": "What is digital marketing, according to the course definition?",
+          "options": [
+            "A new discipline that replaces traditional marketing in mature markets",
+            "The use of digital and social channels to promote a brand or reach consumers",
+            "The data layer that captures customer behavior across the funnel"
+          ],
+          "answer": 1,
+          "rationale": "Digital marketing = aprovechar canales digitales y sociales. No sustituye al tradicional ni se reduce a la capa de analítica."
+        },
+        {
+          "q": "Los directores de marketing deberían centrar su atención en:",
+          "options": [
+            "Los clientes más rentables del portafolio para defender margen",
+            "Los segmentos emergentes donde la competencia aún es débil",
+            "Ambos: clientes actuales y no-clientes a la vez"
+          ],
+          "answer": 2,
+          "rationale": "El mandato es atender a ambos lados — retener clientes actuales y conquistar no-clientes. Focalizar solo en alta rentabilidad o en emergentes es una visión parcial."
+        },
+        {
+          "q": "According to the Lenovo presentation, a key factor for innovation success is:",
+          "options": [
+            "Filing patents early to block competitors before launch",
+            "Listening to customers and understanding how they will use the technology",
+            "Sequencing prototypes through long internal validation cycles"
+          ],
+          "answer": 1,
+          "rationale": "Lenovo: escuchar + entender el uso real es la palanca. Patentes y validación interna son tácticas auxiliares, no el factor clave del caso."
+        },
+        {
+          "q": "Una de las principales desventajas de las marcas locales es:",
+          "options": [
+            "Su escasa capacidad para soportar grandes inversiones publicitarias",
+            "Mayores costes de inventario al gestionar muchas referencias",
+            "La pérdida del significado original al crecer en notoriedad"
+          ],
+          "answer": 1,
+          "rationale": "La desventaja estructural es de inventario y eficiencia operativa al multiplicar referencias. La capacidad publicitaria depende del player, no del tipo de marca; el significado no se pierde por crecer dentro del mercado local."
+        },
+        {
+          "q": "Globalization of markets typically implies:",
+          "options": [
+            "Fragmentation of consumer needs and slower trade flows",
+            "More homogeneous needs combined with deregulation and scale",
+            "Stronger national protection of brands and intellectual property"
+          ],
+          "answer": 1,
+          "rationale": "Globalización = homogeneización relativa + deregulación + escala. Las otras opciones describen tendencias contrarias (fragmentación y proteccionismo)."
+        },
+        {
+          "q": "En la era de la inteligencia artificial aplicada al marketing, los robots:",
+          "options": [
+            "Liderarán la estrategia gracias a su capacidad de aprendizaje continuo",
+            "Limitarán su rol a la ejecución táctica de campañas de bajo coste",
+            "Pondrán certeza en los datos mientras los humanos lideran con creatividad"
+          ],
+          "answer": 2,
+          "rationale": "En el 8 Ms los robots dan certeza en datos; los humanos lideran. Ni co-lideran estratégicamente ni se reducen a ejecución táctica de campañas."
+        },
+        {
+          "q": "From the firm's perspective, marketing is best defined as:",
+          "options": [
+            "Making decisions on the 4 Ps and conducting market research",
+            "Allocating capital between brand-building and performance media",
+            "Coordinating sales, distribution and post-sale customer service"
+          ],
+          "answer": 0,
+          "rationale": "Visión de la firma: 4 Ps + investigación + estrategia. Las otras opciones describen subprocesos (capital allocation, distribución) pero no la definición."
+        },
+        {
+          "q": "¿Qué es una marca, desde la perspectiva del marketing moderno?",
+          "options": [
+            "Un conjunto de atributos funcionales con una identidad visual reconocible",
+            "Un portafolio de significados, valores y promesas emocionales",
+            "Un activo financiero cuyo valor se mide por la prima sobre el competidor"
+          ],
+          "answer": 1,
+          "rationale": "Marca = portafolio de significados. La opción 0 reduce la marca a atributos + identidad; la 2 la confunde con su valoración financiera (brand value, no brand)."
+        },
+        {
+          "q": "What do consumers actually buy in the modern marketplace?",
+          "options": [
+            "Value — the combination of benefits versus their sacrifices",
+            "Experiences that signal social identity within their reference group",
+            "Brands with proven track record across multiple product cycles"
+          ],
+          "answer": 0,
+          "rationale": "Compran VALOR (beneficios vs sacrificios). La opción 1 es un tipo concreto de beneficio; la 2 es un proxy de calidad — ambos son inputs del valor, no el sustituto de la respuesta."
+        },
+        {
+          "q": "La estrategia local de internacionalización se caracteriza por:",
+          "options": [
+            "Adoptar el mismo posicionamiento de marca con traducciones lingüísticas",
+            "Respuesta flexible y profunda a las necesidades de cada mercado",
+            "Replicar el modelo de la matriz manteniendo márgenes y procesos"
+          ],
+          "answer": 1,
+          "rationale": "Local strategy = flexibilidad y profundidad de adaptación. Las opciones 0 y 2 son formas de estandarización ligera disfrazada, no estrategia local."
+        }
+      ]
+    },
+    {
+      "id": "m2",
+      "title": "Mock 2 · simulacre",
+      "questions": [
+        {
+          "q": "La estrategia global supone:",
+          "options": [
+            "Producción y ventas globales a bajo coste y baja complejidad",
+            "Coordinación regional con autonomía táctica en cada país",
+            "Marca consistente con cadenas de suministro replicadas por mercado"
+          ],
+          "answer": 0,
+          "rationale": "Global = escala + bajo coste + baja complejidad. La opción 1 describe una estrategia regional/transnacional; la 2 mezcla branding global con duplicación operativa (no global pura)."
+        },
+        {
+          "q": "From a marketing perspective, the objective of innovation is to:",
+          "options": [
+            "Add value to the customers through new offerings",
+            "Disrupt the industry value chain before competitors react",
+            "Increase the firm's pricing power across the existing portfolio"
+          ],
+          "answer": 0,
+          "rationale": "Objetivo de la innovación en marketing = añadir valor al cliente. Disrupción y pricing power son consecuencias deseables, no el objetivo."
+        },
+        {
+          "q": "¿Cuáles son las decisiones clave antes de entrar en un mercado internacional?",
+          "options": [
+            "Dónde, cuándo y cómo entrar en ese mercado",
+            "Qué adaptaciones del producto, qué socios y qué precio aplicar",
+            "Qué mercados descartar, qué modo de entrada y qué inversión presupuestar"
+          ],
+          "answer": 0,
+          "rationale": "Las decisiones marco son dónde + cuándo + cómo. Las otras opciones contienen elementos relevantes pero confunden decisión-marco con decisiones tácticas posteriores."
+        },
+        {
+          "q": "What is virtual reality (VR)?",
+          "options": [
+            "An overlay of digital information aligned with the user's real surroundings",
+            "A blended environment where digital and physical objects can interact",
+            "A computer simulation where the world around the user is replaced"
+          ],
+          "answer": 2,
+          "rationale": "VR sustituye el entorno. La opción 0 describe AR (overlay); la 1 describe MR (mezcla interactiva)."
+        },
+        {
+          "q": "Una de las principales ventajas de las marcas internacionales (vs locales o globales puras) es:",
+          "options": [
+            "Garantizan los mejores costes unitarios en todos los mercados servidos",
+            "Permiten desplegar la marca con total autonomía cultural en cada país",
+            "Equilibrio entre reconocimiento global y adaptación cultural"
+          ],
+          "answer": 2,
+          "rationale": "Marcas internacionales = equilibrio. Costes unitarios óptimos es ventaja de las globales; autonomía total es ventaja de las locales."
+        },
+        {
+          "q": "According to the Reckitt Benckiser case, their portfolio is built around:",
+          "options": [
+            "20 power brands combining global reach with local relevance",
+            "Una estructura piramidal con una mega-marca corporativa al frente",
+            "Marcas premium en mercados maduros y marcas value en emergentes"
+          ],
+          "answer": 0,
+          "rationale": "RB ~20 power brands que combinan alcance global con relevancia local. Ni mega-marca corporativa ni una segmentación premium/value pura por geografía."
+        },
+        {
+          "q": "El marketing digital se define como:",
+          "options": [
+            "Hacer marketing aprovechando las herramientas digitales disponibles",
+            "Construir la experiencia del cliente directamente sobre canales propios",
+            "Desplazar la inversión publicitaria del offline al online progresivamente"
+          ],
+          "answer": 0,
+          "rationale": "Digital marketing = uso de herramientas digitales. Las otras opciones describen tácticas concretas (DTC, media shift) que se enmarcan dentro del digital, no su definición."
+        },
+        {
+          "q": "In the value equation, perceived sacrifices include:",
+          "options": [
+            "Only the monetary cost of acquisition and ongoing service fees",
+            "The amount of effort and switching cost relative to the current option",
+            "Price, effort, time, risk and any non-monetary trade-off"
+          ],
+          "answer": 2,
+          "rationale": "Sacrifices = todos los costes percibidos (precio + esfuerzo + tiempo + riesgo + ...). Las otras dos son subconjuntos parciales."
+        },
+        {
+          "q": "En el contexto del 8 Ms del marketing con IA, los humanos aportan:",
+          "options": [
+            "Velocidad de cálculo y procesamiento simultáneo de fuentes de datos",
+            "Modelos predictivos entrenados con datos propietarios de la compañía",
+            "Creatividad, visión estratégica y conexión emocional"
+          ],
+          "answer": 2,
+          "rationale": "Humanos: creatividad + visión + emoción. La velocidad de cálculo y los modelos predictivos son aportaciones de las máquinas."
+        },
+        {
+          "q": "What is the brand portfolio of most global companies composed of?",
+          "options": [
+            "A core global brand surrounded by short-lived tactical sub-brands",
+            "Two parallel tiers: international premium and local mass-market brands",
+            "A combination of global, international and local brands"
+          ],
+          "answer": 2,
+          "rationale": "Mix de los tres niveles. La opción 0 describe una arquitectura corporativa concreta; la 1 confunde la combinación con una segmentación premium/mass."
+        },
+        {
+          "q": "La realidad mixta (MR) se caracteriza por:",
+          "options": [
+            "Aislar al usuario en un entorno simulado de altísima fidelidad",
+            "Mostrar capas digitales fijas sin reaccionar a los objetos físicos",
+            "Combinar elementos físicos y digitales que pueden interactuar entre sí"
+          ],
+          "answer": 2,
+          "rationale": "MR = mezcla interactiva físico/digital. La opción 0 describe VR; la 1 describe AR sin spatial awareness."
+        },
+        {
+          "q": "¿Por qué necesitan las empresas innovar continuamente?",
+          "options": [
+            "Para diluir el riesgo del portafolio con nuevos lanzamientos",
+            "Para mantener la cuota frente a las extensiones de los competidores",
+            "Para ofrecer al cliente una propuesta de valor superior a la competencia"
+          ],
+          "answer": 2,
+          "rationale": "Innovar = entregar valor superior. Diversificar riesgo y defender cuota son consecuencias derivadas, no la razón estratégica desde marketing."
+        },
+        {
+          "q": "The red ocean strategy is mainly focused on:",
+          "options": [
+            "Building demand among non-customers in adjacent categories",
+            "Reshaping the value/cost trade-off to make the competition irrelevant",
+            "Capturing and serving the existing customer base of competitors"
+          ],
+          "answer": 2,
+          "rationale": "Red Ocean = pelear por clientes actuales. Las opciones 0 y 1 son axiomas de Blue Ocean (no-clientes y value innovation)."
+        },
+        {
+          "q": "En la estrategia GloCal, la marca:",
+          "options": [
+            "Centraliza la creatividad y descentraliza únicamente los precios locales",
+            "Mantiene un mismo posicionamiento global con traducciones culturales",
+            "Equilibra coherencia global con relevancia y adaptación local"
+          ],
+          "answer": 2,
+          "rationale": "GloCal = balance verdadero. Las otras opciones son adaptaciones cosméticas que no equilibran coherencia con relevancia."
+        },
+        {
+          "q": "Limiting factors that prevent full standardization include:",
+          "options": [
+            "The maturity of digital distribution channels across regions",
+            "The drive for cost reduction imposed by global supply chains",
+            "Cultural, social and regulatory differences between markets"
+          ],
+          "answer": 2,
+          "rationale": "Lo que limita la estandarización es lo cultural/social/regulatorio. La opción 1 empuja en sentido contrario; la 0 es un facilitador, no un freno."
+        },
+        {
+          "q": "¿En qué se basa principalmente la estrategia de innovación de Lenovo?",
+          "options": [
+            "Inversión sostenida en I+D propietario para liderar la frontera técnica",
+            "Escuchar al cliente y entender cómo utilizará la tecnología",
+            "Adquisición de start-ups para incorporar capacidades emergentes"
+          ],
+          "answer": 1,
+          "rationale": "Lenovo: escuchar al cliente + uso real. Inversión en I+D y adquisiciones son palancas posibles pero no el eje del caso."
+        },
+        {
+          "q": "What is a brand, from a marketing perspective?",
+          "options": [
+            "The bundle of tangible features that differentiate the product",
+            "A portfolio of meanings, values and emotional associations",
+            "The set of touchpoints through which the company reaches customers"
+          ],
+          "answer": 1,
+          "rationale": "Marca = portafolio de significados. La opción 0 reduce la marca al producto físico; la 2 la confunde con su sistema de comunicación."
+        },
+        {
+          "q": "La principal desventaja de utilizar marcas globales es:",
+          "options": [
+            "Su menor capacidad para construir economías de escala internacionales",
+            "Las complicaciones legales y de adaptación cultural por mercado",
+            "Su exposición permanente a mercados grises de importación paralela"
+          ],
+          "answer": 1,
+          "rationale": "La desventaja estructural de las globales es legal + cultural. La opción 0 es justo su ventaja invertida; los mercados grises afectan a todas las multinacionales, no solo a las globales."
+        },
+        {
+          "q": "From the customer's perspective, the 4 Ps translate into:",
+          "options": [
+            "Customer solution, Cost, Communication and Convenience",
+            "Producto, Precio, Promoción y Posicionamiento (4ª P reinterpretada)",
+            "Customer experience, Contenido, Conversación y Comunidad (4 Cs digitales)"
+          ],
+          "answer": 0,
+          "rationale": "4 Cs de Lauterborn = Customer solution, Cost, Communication, Convenience. Las otras opciones son frameworks distintos posteriores."
+        },
+        {
+          "q": "¿Cuál es el objetivo del marketing desde la perspectiva del cliente?",
+          "options": [
+            "Ser proveedor de valor que hace al cliente sentirse mejor",
+            "Garantizar la coherencia de la experiencia en todos los touchpoints",
+            "Acercar la oferta de la empresa al precio que el cliente está dispuesto a pagar"
+          ],
+          "answer": 0,
+          "rationale": "Customer POV = proveedor de valor. La coherencia omnichannel y el ajuste de precio son medios para entregar valor, no el objetivo."
+        },
+        {
+          "q": "According to the Reckitt Benckiser presentation, their growth model relies on:",
+          "options": [
+            "Heavy investment in innovation and brand equity over time",
+            "Rotación acelerada del portafolio mediante M&A continuo",
+            "Apalancamiento del canal moderno frente al tradicional"
+          ],
+          "answer": 0,
+          "rationale": "RB: innovación + brand equity. M&A y palanca de canal son tácticas plausibles pero no el modelo de crecimiento expuesto."
+        },
+        {
+          "q": "El brand portfolio óptimo para una empresa global suele combinar:",
+          "options": [
+            "Marcas globales, internacionales y locales según mercado",
+            "Marcas premium globales y marcas paraguas regionales por continente",
+            "Marcas funcionales para masas y marcas emocionales para nichos"
+          ],
+          "answer": 0,
+          "rationale": "El óptimo es el mix de los tres niveles. Las otras opciones son segmentaciones plausibles del portafolio pero no responden al tipo de marca (global/internacional/local)."
+        },
+        {
+          "q": "In the marketplace today:",
+          "options": [
+            "Competition is global, intense and customers are more sophisticated",
+            "Markets are fragmenting back to local players in most categories",
+            "Customer attention is the only scarce resource; competition is irrelevant"
+          ],
+          "answer": 0,
+          "rationale": "Hoy = competencia global intensa + clientes sofisticados. La opción 1 ignora la presión global; la 2 absolutiza la atención y descarta la competencia."
+        },
+        {
+          "q": "La definición de marketing según la American Marketing Association incluye:",
+          "options": [
+            "Identificar segmentos rentables y servir su demanda manifiesta",
+            "Crear, comunicar, entregar e intercambiar ofertas de valor",
+            "Conectar producto, precio, plaza y promoción de manera coherente"
+          ],
+          "answer": 1,
+          "rationale": "AMA: crear + comunicar + entregar + intercambiar valor. La opción 0 reduce el marketing a segmentación; la 2 lo reduce a 4 Ps (visión de la firma)."
+        },
+        {
+          "q": "Why did virtual reality fail commercially in the 1990s?",
+          "options": [
+            "Hardware costs collapsed faster than developers could adapt the software",
+            "Neither the technology nor the users were sufficiently prepared",
+            "Strong regulatory pushback limited rollout in consumer electronics"
+          ],
+          "answer": 1,
+          "rationale": "Falló en ambos lados (tech + users). La opción 0 invierte la lógica histórica; la 2 inventa una causa regulatoria que no fue determinante."
+        },
+        {
+          "q": "Una de las principales ventajas competitivas de una marca local es:",
+          "options": [
+            "Su capacidad de escalar internacionalmente con bajos costes operativos",
+            "Su nombre con significado cultural y cercanía emocional al cliente",
+            "Su protección automática frente a importaciones paralelas"
+          ],
+          "answer": 1,
+          "rationale": "Marca local = significado + cercanía. Escala internacional es ventaja de las globales; la protección frente a importaciones no es una característica de marca sino legal."
+        },
+        {
+          "q": "The value equation can be summarized as:",
+          "options": [
+            "Value = Perceived benefits / Perceived sacrifices",
+            "Value = Brand promise × Likelihood of repeat purchase",
+            "Value = (Quality + Service) − (Price + Effort)"
+          ],
+          "answer": 0,
+          "rationale": "Value = beneficios / sacrificios (formulación clásica del curso). Las otras dos son fórmulas alternativas plausibles pero no la del marco utilizado."
+        },
+        {
+          "q": "En las marcas globales, una ventaja clave es:",
+          "options": [
+            "Su capacidad de adaptación rápida cuando cambia el gusto local",
+            "La máxima eficiencia de las actividades de marketing por escala",
+            "La menor exposición a riesgos regulatorios en países desarrollados"
+          ],
+          "answer": 1,
+          "rationale": "Globales = eficiencia por escala. La adaptación rápida es ventaja de las locales; la exposición regulatoria es independiente del tipo de marca."
+        },
+        {
+          "q": "Marketing managers should focus their strategy on:",
+          "options": [
+            "Heavy users of the category, who concentrate the bulk of revenue",
+            "Lapsed customers, who are typically cheaper to reactivate than acquire",
+            "Both current customers and non-customers, in balance"
+          ],
+          "answer": 2,
+          "rationale": "El mandato es ambos lados (retención + captación). Centrarse solo en heavy users o solo en lapsed es una optimización táctica, no la estrategia."
+        },
+        {
+          "q": "La realidad aumentada (AR) introduce en el entorno del usuario:",
+          "options": [
+            "Un entorno completamente simulado pero sincronizado con el mundo físico",
+            "Objetos o paneles informativos digitales sobre el mundo real",
+            "Una réplica digital del usuario interactuando dentro de un avatar"
+          ],
+          "answer": 1,
+          "rationale": "AR = añade objetos/info digital al mundo real. La opción 0 sigue siendo VR (con sincronización); la 2 describe un avatar / virtual presence."
+        },
+        {
+          "q": "From the company's perspective, marketing involves:",
+          "options": [
+            "Making decisions on the 4 Ps and conducting strategic research",
+            "Aligning sales targets with finance through annual budget cycles",
+            "Owning the customer relationship after the point of purchase"
+          ],
+          "answer": 0,
+          "rationale": "Visión de la firma = 4 Ps + research + estrategia. Las otras opciones describen procesos colindantes (planning, CX), no el núcleo del marketing."
+        },
+        {
+          "q": "Las redes sociales como canal de marketing son particularmente útiles para:",
+          "options": [
+            "Sustituir la inversión en medios tradicionales en categorías maduras",
+            "Combinar relaciones públicas con gestión de reputación de marca",
+            "Cerrar ventas directas con margen alto sin canales intermediarios"
+          ],
+          "answer": 1,
+          "rationale": "SMM brilla como PR + gestión de reputación. La opción 0 es una afirmación táctica discutible; la 2 es social commerce — un subcaso, no el núcleo del canal."
+        },
+        {
+          "q": "What does globalization of markets typically imply?",
+          "options": [
+            "Greater volatility of consumer behavior across countries",
+            "More homogeneous needs, deregulation and economies of scale",
+            "Slower diffusion of innovation due to fragmented regulation"
+          ],
+          "answer": 1,
+          "rationale": "Globalización = homogeneización relativa + deregulación + escala. La volatilidad y la fragmentación regulatoria apuntan en dirección contraria."
+        },
+        {
+          "q": "La estrategia local se caracteriza principalmente por:",
+          "options": [
+            "Centralizar las decisiones estratégicas y descentralizar solo la ejecución",
+            "Respuesta flexible a las necesidades del cliente local",
+            "Replicar el modelo global con ajustes mínimos en cada país"
+          ],
+          "answer": 1,
+          "rationale": "Local = flexibilidad y adaptación profunda. Las opciones 0 y 2 describen modelos transnacional/global con cosmética local, no estrategia local."
+        },
+        {
+          "q": "In the marketing definition, the customer journey is best described as:",
+          "options": [
+            "The internal workflow that converts a lead into a closed sale",
+            "The process the consumer goes through while interacting with a brand",
+            "The lifecycle profitability curve from acquisition to churn"
+          ],
+          "answer": 1,
+          "rationale": "Customer journey = proceso del consumidor con la marca. La opción 0 es el embudo de ventas (interno); la 2 es CLV (lectura financiera)."
+        }
+      ]
+    },
+    {
+      "id": "m3",
+      "title": "Mock 3 · simulacre",
+      "questions": [
+        {
+          "q": "Tener una definición clara de la razón para internacionalizar ayuda a:",
+          "options": [
+            "Identificar el mercado ideal y los criterios para entrar",
+            "Negociar con socios locales desde una posición de fuerza",
+            "Justificar internamente el presupuesto necesario ante el comité"
+          ],
+          "answer": 0,
+          "rationale": "Tener un 'porqué' claro guía la elección de mercados y criterios de entrada. Negociación interna o externa son consecuencias posteriores, no el aporte directo."
+        },
+        {
+          "q": "What is the main goal of innovation from a marketing point of view?",
+          "options": [
+            "To add value to the customers through new offerings",
+            "To accelerate the obsolescence of competing products in the category",
+            "To justify a price premium that protects existing margins"
+          ],
+          "answer": 0,
+          "rationale": "Objetivo = añadir valor al cliente. Obsolescencia ajena y premium pricing son consecuencias deseables, no el objetivo de la innovación."
+        },
+        {
+          "q": "En el modelo 8 Ms, ¿qué papel tienen las máquinas?",
+          "options": [
+            "Toman las decisiones tácticas en tiempo real sin supervisión humana",
+            "Sustituyen al equipo de analítica liberando recursos para creatividad",
+            "Aportan certeza en los datos como input para los humanos"
+          ],
+          "answer": 2,
+          "rationale": "Máquinas = certeza en datos como input. Las otras opciones suenan plausibles en discursos de automation pero no encajan con el rol descrito en el 8 Ms."
+        },
+        {
+          "q": "The blue ocean strategy is primarily focused on:",
+          "options": [
+            "Optimizing the trade-off between value and cost within the industry",
+            "Defending market leadership through aggressive price competition",
+            "Creating new demand and reaching non-customers"
+          ],
+          "answer": 2,
+          "rationale": "Blue Ocean = nueva demanda + no-clientes. La opción 0 describe el trade-off típico de Red Ocean; la 1 es competencia directa, opuesta al espíritu Blue Ocean."
+        },
+        {
+          "q": "Una de las principales desventajas de las marcas internacionales es:",
+          "options": [
+            "Su limitada capacidad de defender el precio frente a competidores globales",
+            "Su rigidez para entrar en mercados con barreras culturales fuertes",
+            "Complejidad de gestión al equilibrar adaptación y consistencia"
+          ],
+          "answer": 2,
+          "rationale": "Internacionales = complejidad por intentar equilibrar dos lógicas. Defender precio o rigidez cultural son problemas más propios de globales puras."
+        },
+        {
+          "q": "What is digital marketing primarily about?",
+          "options": [
+            "Migrating traditional marketing campaigns into digital channels gradually",
+            "Personalizing the customer experience through automated decisioning",
+            "Using digital and social channels to promote brands and reach consumers"
+          ],
+          "answer": 2,
+          "rationale": "Definición = uso de canales digitales/sociales. La opción 0 es media shift; la 1 es personalization — ambas son tácticas dentro del digital, no su definición."
+        },
+        {
+          "q": "Las decisiones esenciales antes de internacionalizar un negocio son:",
+          "options": [
+            "Dónde, cuándo y cómo entrar en el mercado seleccionado",
+            "Qué segmento priorizar y qué propuesta de valor adaptar",
+            "Qué modo de entrada elegir y qué nivel de inversión asignar"
+          ],
+          "answer": 0,
+          "rationale": "Marco clásico = dónde + cuándo + cómo. Las opciones 1 y 2 son decisiones tácticas que se enmarcan dentro del 'cómo' pero no son la decisión-marco."
+        },
+        {
+          "q": "What is the customer's perspective on marketing?",
+          "options": [
+            "A discipline that builds awareness and pulls consumers into the funnel",
+            "A coordinated set of touchpoints managed by the brand team",
+            "A provider of value that solves their needs and feels good"
+          ],
+          "answer": 2,
+          "rationale": "Customer POV = proveedor de valor. La opción 0 es perspectiva publicitaria; la 1 es perspectiva interna de la firma — ambas son visiones del marketer, no del cliente."
+        },
+        {
+          "q": "En el contexto del modelo 8 Ms aplicado al marketing con IA:",
+          "options": [
+            "Las máquinas marcan la dirección estratégica y los humanos ejecutan",
+            "Los humanos y las máquinas se reparten las decisiones de forma alternada",
+            "Los robots aportan datos y los humanos creatividad y estrategia"
+          ],
+          "answer": 2,
+          "rationale": "8 Ms = humanos lideran, máquinas dan certeza. Las opciones 0 y 1 confunden la jerarquía o la reducen a un reparto simétrico que el modelo no propone."
+        },
+        {
+          "q": "Globalization of markets typically results in:",
+          "options": [
+            "More homogeneous needs and economies of scale",
+            "Stronger differentiation of consumer preferences across regions",
+            "Shorter product lifecycles driven by local regulatory cycles"
+          ],
+          "answer": 0,
+          "rationale": "Globalización = homogeneización + escala. Las otras opciones describen tendencias contrarias (fragmentación, regulación local fuerte)."
+        },
+        {
+          "q": "¿Cuál es una característica clave de la estrategia global?",
+          "options": [
+            "Producción y ventas globales con bajo coste y poca complejidad",
+            "Marca consistente con cadena de suministro descentralizada por región",
+            "Adaptación táctica del producto con un mensaje publicitario común"
+          ],
+          "answer": 0,
+          "rationale": "Global = escala + bajo coste + baja complejidad. Las otras opciones son híbridos transnacionales / glocales, no estrategia global pura."
+        },
+        {
+          "q": "What is augmented reality (AR)?",
+          "options": [
+            "A fully immersive simulation where the user wears an opaque headset",
+            "A 360-degree video experience displayed on a flat screen",
+            "An enhancement of the real world by adding digital information"
+          ],
+          "answer": 2,
+          "rationale": "AR = enriquece la realidad. La opción 0 es VR; la 2 es 360 video, una tecnología distinta sin spatial overlay."
+        },
+        {
+          "q": "Una marca, desde la perspectiva del marketing, es:",
+          "options": [
+            "El conjunto de elementos visuales y verbales que identifican al producto",
+            "El activo intangible cuyo valor se mide por la prima sobre el competidor",
+            "Un portafolio de significados, valores y emociones asociadas"
+          ],
+          "answer": 2,
+          "rationale": "Marca = portafolio de significados. La opción 0 confunde marca con identidad visual; la 1 confunde marca con brand equity / brand value."
+        },
+        {
+          "q": "In the value equation for customers, the numerator is:",
+          "options": [
+            "The premium the customer is willing to pay over the cheapest alternative",
+            "The total cost of ownership across the product's useful life",
+            "The perceived benefits of using the product or service"
+          ],
+          "answer": 2,
+          "rationale": "Numerador = beneficios percibidos. La opción 0 es una medida de disposición a pagar; la 1 es TCO (denominador)."
+        },
+        {
+          "q": "¿Qué define la estrategia de innovación de Lenovo según el caso visto en clase?",
+          "options": [
+            "Cross-selling agresivo apoyado en su base instalada de PC",
+            "Inversión en marketing emocional para reposicionar la marca",
+            "Escuchar al cliente y entender cómo usará la tecnología"
+          ],
+          "answer": 2,
+          "rationale": "Lenovo: escuchar al cliente + uso real. Las otras opciones son palancas comerciales plausibles pero no el eje de innovación expuesto en el caso."
+        },
+        {
+          "q": "The marketing definition by the AMA describes marketing as:",
+          "options": [
+            "The set of processes for creating, communicating and delivering value",
+            "The discipline that aligns sales channels with the company's strategy",
+            "The art of generating measurable demand for products and services"
+          ],
+          "answer": 0,
+          "rationale": "AMA: crear, comunicar, entregar e intercambiar valor. Las otras opciones son recortes (sales alignment / demand gen) que no recogen la definición completa."
+        },
+        {
+          "q": "Una de las principales ventajas de las marcas locales frente a las globales es:",
+          "options": [
+            "Mayor capacidad de inversión publicitaria por canal local",
+            "Mejor cobertura legal frente a copias y mercados grises",
+            "Nombre con significado cultural y cercanía con el cliente"
+          ],
+          "answer": 2,
+          "rationale": "Ventaja local = significado + cercanía. La capacidad publicitaria no se deriva del tipo de marca; la cobertura legal tampoco — ambas dependen del player."
+        },
+        {
+          "q": "What is the value equation for customers?",
+          "options": [
+            "The relationship between perceived benefits and perceived sacrifices",
+            "The ratio of brand-driven demand to total category demand",
+            "The willingness-to-pay minus the actual price paid at purchase"
+          ],
+          "answer": 0,
+          "rationale": "Value = beneficios / sacrificios. La opción 1 es brand share / SOM; la 2 es consumer surplus (concepto microeconómico, no la value equation del curso)."
+        },
+        {
+          "q": "La estrategia del océano rojo se centra principalmente en:",
+          "options": [
+            "Crear nueva demanda saltando a categorías adyacentes",
+            "Competir por los clientes actuales del mercado existente",
+            "Redefinir el sector cruzando las fronteras de las categorías existentes"
+          ],
+          "answer": 1,
+          "rationale": "Red Ocean = pelear por clientes actuales. Las otras opciones son maniobras Blue Ocean (creación de demanda y reconfiguración de fronteras)."
+        },
+        {
+          "q": "What is the difference between AR and MR?",
+          "options": [
+            "AR overlays digital content on the real world without interaction",
+            "AR and MR are interchangeable terms in the latest industry definitions",
+            "MR requires opaque headsets; AR requires only a phone camera"
+          ],
+          "answer": 0,
+          "rationale": "AR superpone sin interacción profunda con lo físico; MR sí permite esa interacción. Las otras opciones son simplificaciones técnicas o erróneas."
+        },
+        {
+          "q": "Según la presentación de Reckitt Benckiser, su modelo de crecimiento se basa en:",
+          "options": [
+            "Inversión en innovación y construcción del brand equity",
+            "Expansión geográfica acelerada hacia mercados emergentes",
+            "Optimización del precio relativo frente a la marca de distribuidor"
+          ],
+          "answer": 0,
+          "rationale": "RB = innovación + brand equity. Expansión geográfica y pricing frente a MDD son tácticas adicionales, no el eje del modelo."
+        },
+        {
+          "q": "What is the brand portfolio of most global companies composed of?",
+          "options": [
+            "Two layers: master brand at the top and product brands below it",
+            "A combination of global, international and local brands",
+            "House of brands with no corporate identity linking them visibly"
+          ],
+          "answer": 1,
+          "rationale": "Mix de los tres niveles (global / internacional / local). Las opciones 0 y 2 son arquitecturas de marca (branded house vs house of brands), no la cobertura geográfica."
+        },
+        {
+          "q": "En el contexto actual del marketplace, las empresas se enfrentan a:",
+          "options": [
+            "Mayor lealtad de marca y menos comparación entre alternativas",
+            "Competencia global intensa y consumidores cada vez más exigentes",
+            "Crecimiento de la oferta acompañado de menor poder negociador del cliente"
+          ],
+          "answer": 1,
+          "rationale": "Marketplace actual = competencia global intensa + clientes sofisticados. Las otras opciones describen un mundo que ya no existe (alta lealtad, cliente débil)."
+        },
+        {
+          "q": "From the company's perspective, marketing is essentially:",
+          "options": [
+            "The corporate function responsible for protecting brand reputation",
+            "A combination of 4 P decisions plus market research and strategy",
+            "An umbrella for advertising, PR and customer communications"
+          ],
+          "answer": 1,
+          "rationale": "Visión de la firma = 4 Ps + research + estrategia. La opción 0 es solo parte (corporate reputation); la 2 reduce el marketing a comunicación."
+        },
+        {
+          "q": "La realidad virtual se distingue de la realidad mixta porque:",
+          "options": [
+            "La VR simula entornos enteros, la MR mezcla físico y digital",
+            "La VR funciona en dispositivos móviles, la MR requiere headset propietario",
+            "Ambas son inmersivas; la diferencia está en la latencia del renderizado"
+          ],
+          "answer": 0,
+          "rationale": "VR sustituye, MR combina. Las otras opciones describen aspectos técnicos (hardware, latencia) que no son el criterio conceptual de distinción."
+        },
+        {
+          "q": "What does the \"GloCal\" strategy mean in international marketing?",
+          "options": [
+            "Centralizing brand decisions and decentralizing operational ones",
+            "Looking for a balance between global and local strategies",
+            "Applying a global brand identity with locally negotiated pricing"
+          ],
+          "answer": 1,
+          "rationale": "GloCal = balance verdadero. La opción 0 describe una estructura organizativa concreta; la 2 es estandarización con cosmética de precio."
+        },
+        {
+          "q": "Una de las desventajas principales de las marcas globales es:",
+          "options": [
+            "Su sobreexposición a los movimientos del tipo de cambio entre mercados",
+            "La dificultad para adaptarse a cada cultura local específica",
+            "Su menor capacidad de invertir en construcción de marca consistente"
+          ],
+          "answer": 1,
+          "rationale": "Desventaja estructural = falta de adaptación cultural. El forex es un riesgo financiero, no de marca; la capacidad de invertir en marca es ventaja, no desventaja."
+        },
+        {
+          "q": "Why do consumers buy products today, in most categories?",
+          "options": [
+            "Because of value — the balance of benefits and sacrifices perceived",
+            "Because of trust signals built through years of advertising exposure",
+            "Because of identity — products serve mainly as symbols of belonging"
+          ],
+          "answer": 0,
+          "rationale": "Compran valor. Trust e identity son tipos de beneficio dentro del numerador del valor — son inputs, no la respuesta completa."
+        },
+        {
+          "q": "Los factores que limitan la estandarización internacional incluyen:",
+          "options": [
+            "La escasa madurez de los canales de comercio electrónico transfronterizo",
+            "Diferencias culturales, sociales y regulatorias entre mercados",
+            "La presión de los inversores por economías de escala globales"
+          ],
+          "answer": 1,
+          "rationale": "Lo que limita es lo cultural/social/regulatorio. La madurez del ecommerce empuja hacia la estandarización; la presión inversora también."
+        },
+        {
+          "q": "What is the most accurate description of virtual reality (VR)?",
+          "options": [
+            "A digital layer that augments objects already present in the room",
+            "A computer simulation where the world around the user is replaced",
+            "A real-time mirror of the user's environment with annotations on top"
+          ],
+          "answer": 1,
+          "rationale": "VR = reemplazo total del entorno. La opción 0 es AR; la 2 es algo más cercano a digital twin / AR avanzada."
+        },
+        {
+          "q": "¿En qué consiste la principal ventaja de las marcas globales?",
+          "options": [
+            "Su capacidad de respuesta rápida a las tendencias culturales locales",
+            "La máxima eficiencia de marketing por economías de escala",
+            "Su acceso preferente a talento creativo en cada mercado servido"
+          ],
+          "answer": 1,
+          "rationale": "Globales = eficiencia por escala. Velocidad cultural y acceso a talento local son ventajas de las marcas locales o de la organización local."
+        },
+        {
+          "q": "From the customer's perspective, the 4 Ps become the 4 Cs, which are:",
+          "options": [
+            "Customer solution, Cost, Communication and Convenience",
+            "Cliente, Conveniencia, Conexión y Comunidad (versión digital)",
+            "Customer journey, Coste total, Conversación y Cocreación"
+          ],
+          "answer": 0,
+          "rationale": "4 Cs clásicas (Lauterborn). Las otras opciones son frameworks posteriores que reutilizan iniciales pero no corresponden al original."
+        },
+        {
+          "q": "En el contexto de la presentación de Lenovo, la \"blind strategy\" consistió en:",
+          "options": [
+            "Renunciar al posicionamiento de marca a corto plazo para construir cuota",
+            "Aumentar las ventas en volumen para obtener mejores costes de proveedor",
+            "Apostar por el canal indirecto sin invertir en presencia retail propia"
+          ],
+          "answer": 1,
+          "rationale": "Blind = volumen primero para ganar coste en suministros. Las otras opciones (renuncia a brand / canal indirecto) suenan plausibles pero no son lo descrito en el caso."
+        },
+        {
+          "q": "What does globalization mean today, in modern marketing?",
+          "options": [
+            "Imposing homogeneous solutions across all pluralist markets",
+            "Having a global vision and strategy while cultivating local roots",
+            "Letting each market team define its own brand promise independently"
+          ],
+          "answer": 1,
+          "rationale": "Modern globalization = visión global + raíces locales. La opción 0 es la lectura ingenua y antigua; la 2 es localismo extremo, no globalización moderna."
+        },
+        {
+          "q": "¿Por qué fracasó la realidad virtual en los años noventa?",
+          "options": [
+            "Faltó un caso de uso comercial que justificase la inversión en hardware",
+            "Ni los usuarios ni los diseñadores estaban suficientemente preparados",
+            "El estándar técnico se fragmentó entre fabricantes y bloqueó la adopción"
+          ],
+          "answer": 1,
+          "rationale": "Fracasó porque ambos lados (tech + users) no estaban listos. Las otras opciones describen explicaciones secundarias pero no la causa raíz expuesta en clase."
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<div class="app">
+
+  <!-- ============ HOME SCREEN ============ -->
+  <section id="home" class="screen active">
+    <div class="topbar">
+      <div>
+        <h1 id="subject-title">MCQ Trainer</h1>
+        <div class="sub" id="subject-sub"></div>
+      </div>
+    </div>
+
+    <div class="medal-shelf">
+      <h2>Your medals</h2>
+      <div class="medal-row" id="medal-shelf"></div>
+    </div>
+
+    <div class="tile-grid" id="block-grid"></div>
+  </section>
+
+  <!-- ============ QUIZ SCREEN ============ -->
+  <section id="quiz" class="screen">
+    <div class="topbar">
+      <div>
+        <h1 id="quiz-title">Quiz</h1>
+        <div class="sub" id="quiz-sub"></div>
+      </div>
+      <div class="topbar-right">
+        <div class="timer" id="timer" title="Session timer (pauses on break)"><span class="dot"></span><span id="timer-text">00:00</span></div>
+        <button class="home-btn" id="quit-btn">Quit</button>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-meta">
+        <span id="progress-text">0 / 0 mastered</span>
+        <span id="streak-text">Streak: 0</span>
+      </div>
+    </div>
+
+    <div class="question-card">
+      <div class="q-text" id="q-text">…</div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback">
+        <div class="verdict" id="verdict"></div>
+        <div class="rationale" id="rationale"></div>
+        <button class="next-btn" id="next-btn">Next →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ END SCREEN ============ -->
+  <section id="end" class="screen">
+    <div class="end-card">
+      <h2 id="end-title">All mastered! 🎉</h2>
+      <div class="sub" id="end-sub">Session summary</div>
+      <div class="end-stats">
+        <div class="end-stat"><div class="v" id="stat-answered">0</div><div class="l">Answered</div></div>
+        <div class="end-stat"><div class="v" id="stat-correct">0</div><div class="l">Correct first try</div></div>
+        <div class="end-stat"><div class="v" id="stat-accuracy">0%</div><div class="l">Accuracy</div></div>
+        <div class="end-stat"><div class="v" id="stat-time">00:00</div><div class="l">Total time</div></div>
+      </div>
+      <div class="sub" id="stat-avg-time" style="margin-top:-12px;margin-bottom:18px;font-size:.82rem"></div>
+      <div class="earned-medals" id="earned-medals"></div>
+      <div class="end-actions">
+        <button class="primary" id="end-again">Play again</button>
+        <button class="ghost" id="end-home">Home</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ BREAK MODAL ============ -->
+<div class="modal-backdrop" id="break-modal">
+  <div class="modal">
+    <h3>Take a breath 🌿</h3>
+    <p id="break-text">You've answered 7 questions. Keep going?</p>
+    <div class="row">
+      <button class="primary" id="break-continue">Continue</button>
+      <button class="ghost" id="break-stop">Stop for now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+//================================================================
+// MCQ Trainer — engine
+//================================================================
+const DATA = JSON.parse(document.getElementById('quiz-data').textContent);
+const STORAGE_KEY = 'mcq_' + DATA.subjectId + '_progress';
+
+// ---- Medals catalogue ----
+const MEDAL_DEFS = {
+  finished:  { label: 'Block finished', ic: '🥉', cls: 'bronze' },
+  threeX:    { label: '3× completed',   ic: '🥈', cls: 'silver' },
+  perfect:   { label: 'Perfect run',    ic: '🥇', cls: '' },
+};
+
+// ---- Progress state (persisted) ----
+function loadProgress(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveProgress(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
+function blockState(p, id){
+  if (!p[id]) p[id] = { completions: 0, perfectRuns: 0, medals: [] };
+  return p[id];
+}
+
+// ---- Render: home ----
+function renderHome(){
+  document.getElementById('subject-title').textContent = DATA.subject + ' — MCQ Trainer';
+  const total = DATA.blocks.reduce((n,b)=>n+b.questions.length, 0);
+  document.getElementById('subject-sub').textContent = `${total} questions across ${DATA.blocks.length} blocks`;
+
+  const prog = loadProgress();
+
+  // medal shelf — aggregate across blocks
+  const shelf = document.getElementById('medal-shelf');
+  shelf.innerHTML = '';
+  const totalMedals = { finished:0, threeX:0, perfect:0 };
+  DATA.blocks.forEach(b => {
+    const s = blockState(prog, b.id);
+    s.medals.forEach(m => totalMedals[m] !== undefined && totalMedals[m]++);
+  });
+  Object.entries(MEDAL_DEFS).forEach(([k, def]) => {
+    const count = totalMedals[k];
+    const el = document.createElement('span');
+    el.className = 'medal ' + def.cls + (count === 0 ? ' empty' : '');
+    el.innerHTML = `<span class="ic">${def.ic}</span>${def.label} × ${count}`;
+    shelf.appendChild(el);
+  });
+
+  // tiles
+  const grid = document.getElementById('block-grid');
+  grid.innerHTML = '';
+  DATA.blocks.forEach(b => {
+    const s = blockState(prog, b.id);
+    const btn = document.createElement('button');
+    btn.className = 'tile';
+    btn.innerHTML = `
+      <div class="tile-title">${escapeHtml(b.title)}</div>
+      <div class="tile-meta">
+        <span>${b.questions.length} questions</span>
+        <span>Completed ${s.completions}×</span>
+      </div>
+      <div class="tile-medals">${renderMedals(s.medals)}</div>
+    `;
+    btn.onclick = () => startQuiz([b], b.title);
+    grid.appendChild(btn);
+  });
+
+  // mixed tile
+  const mixed = document.createElement('button');
+  mixed.className = 'tile mixed';
+  mixed.innerHTML = `
+    <div class="tile-title">🎲 Mix all blocks</div>
+    <div class="tile-meta">
+      <span>${DATA.blocks.reduce((n,b)=>n+b.questions.length,0)} questions, shuffled</span>
+      <span>Exam-style</span>
+    </div>
+    <div class="tile-medals"></div>
+  `;
+  mixed.onclick = () => startQuiz(DATA.blocks, 'Mixed — all blocks');
+  grid.appendChild(mixed);
+}
+
+function renderMedals(list){
+  if (!list || list.length === 0) return '';
+  // dedupe display, but show counts
+  const counts = {};
+  list.forEach(m => counts[m] = (counts[m] || 0) + 1);
+  return Object.entries(counts).map(([k,n]) => {
+    const def = MEDAL_DEFS[k];
+    if (!def) return '';
+    return `<span class="medal ${def.cls}"><span class="ic">${def.ic}</span>${def.label}${n>1 ? ' ×'+n : ''}</span>`;
+  }).join('');
+}
+
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ---- Quiz state ----
+let quizState = null;
+
+// ---- Session timer (pauses on break modal) ----
+const timer = {
+  startedAt: 0,       // ms epoch at last resume
+  accumulated: 0,     // ms accumulated across paused segments
+  intervalId: null,
+  running: false,
+  reset(){
+    this.stop();
+    this.startedAt = 0;
+    this.accumulated = 0;
+    renderTimer(0);
+  },
+  start(){
+    if (this.running) return;
+    this.startedAt = Date.now();
+    this.running = true;
+    document.getElementById('timer').classList.remove('paused');
+    this.intervalId = setInterval(() => renderTimer(this.elapsedMs()), 1000);
+    renderTimer(this.elapsedMs());
+  },
+  pause(){
+    if (!this.running) return;
+    this.accumulated += Date.now() - this.startedAt;
+    this.running = false;
+    clearInterval(this.intervalId);
+    this.intervalId = null;
+    document.getElementById('timer').classList.add('paused');
+  },
+  stop(){
+    if (this.running){
+      this.accumulated += Date.now() - this.startedAt;
+      this.running = false;
+    }
+    clearInterval(this.intervalId);
+    this.intervalId = null;
+  },
+  elapsedMs(){
+    return this.accumulated + (this.running ? Date.now() - this.startedAt : 0);
+  },
+};
+
+function formatTime(ms){
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function renderTimer(ms){
+  document.getElementById('timer-text').textContent = formatTime(ms);
+}
+
+function startQuiz(blocks, title){
+  // Build queue. For each question keep meta about which block it came from.
+  const queue = [];
+  blocks.forEach(b => {
+    b.questions.forEach((q, i) => {
+      queue.push({
+        blockId: b.id,
+        blockTitle: b.title,
+        qid: b.id + '_' + i,
+        q: q.q,
+        options: q.options,
+        answer: q.answer,
+        rationale: q.rationale,
+        mastered: false,
+      });
+    });
+  });
+  shuffle(queue);
+
+  quizState = {
+    title,
+    blocks,         // blocks involved (for medal awarding)
+    queue,
+    total: queue.length,
+    sessionAnswered: 0,     // total questions answered this session
+    sessionCorrect: 0,      // correct-on-first-try this session
+    sessionWrongAny: false, // was there any wrong answer this session?
+    streak: 0,              // current correct streak
+    answeredSinceBreak: 0,  // counts toward the 7-question break
+    seenFirstTry: {},       // qid -> bool (whether this question was answered correctly on first try)
+  };
+
+  showScreen('quiz');
+  document.getElementById('quiz-title').textContent = title;
+  document.getElementById('quiz-sub').textContent = `${queue.length} questions to master`;
+  timer.reset();
+  timer.start();
+  nextQuestion();
+}
+
+function shuffle(a){
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+}
+
+function nextQuestion(){
+  if (quizState.queue.length === 0){
+    finishQuiz(true);
+    return;
+  }
+  const q = quizState.queue[0];
+  renderQuestion(q);
+  updateProgressBar();
+}
+
+function renderQuestion(q){
+  document.getElementById('q-text').textContent = q.q;
+  const optsEl = document.getElementById('options');
+  optsEl.innerHTML = '';
+  const letters = ['A','B','C','D','E','F'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="letter">${letters[i]}</span>${escapeHtml(opt)}`;
+    btn.onclick = () => onAnswer(i);
+    optsEl.appendChild(btn);
+  });
+  document.getElementById('feedback').classList.remove('show', 'good', 'bad');
+}
+
+function onAnswer(picked){
+  const q = quizState.queue[0];
+  const correct = picked === q.answer;
+  const opts = document.querySelectorAll('#options .opt');
+  opts.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.answer) b.classList.add('correct');
+    if (i === picked && !correct) b.classList.add('wrong');
+  });
+
+  quizState.sessionAnswered++;
+  quizState.answeredSinceBreak++;
+
+  // track first-try correctness for perfect-run medal
+  const firstTry = !(q.qid in quizState.seenFirstTry);
+  if (firstTry) quizState.seenFirstTry[q.qid] = correct;
+
+  if (correct){
+    quizState.streak++;
+    if (firstTry) quizState.sessionCorrect++;
+    flashScreen('good');
+    showFeedback(true, q.rationale);
+    // mastered (1-correct rule) — remove from queue
+    quizState.queue.shift();
+    // auto-advance on correct after a short pause
+    setTimeout(() => {
+      if (!quizState) return;
+      handlePostAnswer();
+    }, 1100);
+  } else {
+    quizState.streak = 0;
+    quizState.sessionWrongAny = true;
+    flashScreen('bad');
+    showFeedback(false, q.rationale);
+    // Wrong → re-queue 2-4 slots later
+    const removed = quizState.queue.shift();
+    const offset = Math.min(quizState.queue.length, 2 + Math.floor(Math.random() * 3));
+    quizState.queue.splice(offset, 0, removed);
+    // Wait for user to click Next on wrong answers
+    document.getElementById('next-btn').onclick = handlePostAnswer;
+  }
+  updateProgressBar();
+}
+
+function flashScreen(kind){
+  document.body.classList.remove('flash-good', 'flash-bad');
+  // force reflow so animation restarts
+  void document.body.offsetWidth;
+  document.body.classList.add(kind === 'good' ? 'flash-good' : 'flash-bad');
+  setTimeout(() => document.body.classList.remove('flash-good', 'flash-bad'), 600);
+}
+
+function showFeedback(good, rationale){
+  const fb = document.getElementById('feedback');
+  fb.classList.add('show', good ? 'good' : 'bad');
+  document.getElementById('verdict').textContent = good ? '✓ Correct!' : '✗ Not quite';
+  document.getElementById('rationale').textContent = rationale || '';
+  document.getElementById('next-btn').style.display = good ? 'none' : 'inline-block';
+}
+
+function handlePostAnswer(){
+  // Check break (every 7 questions)
+  if (quizState.answeredSinceBreak >= 7 && quizState.queue.length > 0){
+    quizState.answeredSinceBreak = 0;
+    showBreakModal();
+    return;
+  }
+  nextQuestion();
+}
+
+function showBreakModal(){
+  timer.pause();
+  const modal = document.getElementById('break-modal');
+  document.getElementById('break-text').textContent =
+    `You've answered ${quizState.sessionAnswered} questions in ${formatTime(timer.elapsedMs())}. ${quizState.queue.length} left in the pool — keep going?`;
+  modal.classList.add('show');
+}
+
+document.getElementById('break-continue').onclick = () => {
+  document.getElementById('break-modal').classList.remove('show');
+  timer.start();
+  nextQuestion();
+};
+document.getElementById('break-stop').onclick = () => {
+  document.getElementById('break-modal').classList.remove('show');
+  finishQuiz(false);
+};
+
+document.getElementById('quit-btn').onclick = () => {
+  if (!quizState || confirm('Quit this session? Progress for this session will be lost.')){
+    timer.stop();
+    quizState = null;
+    showScreen('home');
+    renderHome();
+  }
+};
+
+function updateProgressBar(){
+  const mastered = quizState.total - quizState.queue.length;
+  const pct = Math.round((mastered / quizState.total) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = `${mastered} / ${quizState.total} mastered`;
+  document.getElementById('streak-text').textContent = `Streak: ${quizState.streak}`;
+}
+
+function finishQuiz(completed){
+  if (!quizState) return;
+  timer.stop();
+  const earned = [];
+
+  // Award medals ONLY if the session actually completed all questions
+  // AND covered exactly one block (mixed mode does not award per-block medals).
+  if (completed && quizState.blocks.length === 1){
+    const block = quizState.blocks[0];
+    const prog = loadProgress();
+    const s = blockState(prog, block.id);
+    s.completions++;
+    // first-time finishing this block
+    if (!s.medals.includes('finished')){
+      s.medals.push('finished'); earned.push('finished');
+    }
+    // 3× completed
+    if (s.completions >= 3 && !s.medals.includes('threeX')){
+      s.medals.push('threeX'); earned.push('threeX');
+    }
+    // perfect run (no wrong answers this whole session)
+    if (!quizState.sessionWrongAny){
+      s.perfectRuns++;
+      // award a perfect medal every time, so it stacks (counts how many perfect runs)
+      s.medals.push('perfect'); earned.push('perfect');
+    }
+    saveProgress(prog);
+  }
+
+  // Stats
+  const answered = quizState.sessionAnswered;
+  const correct = quizState.sessionCorrect;
+  const accuracy = answered ? Math.round((correct / answered) * 100) : 0;
+
+  document.getElementById('end-title').textContent = completed ? 'All mastered! 🎉' : 'Session stopped';
+  document.getElementById('end-sub').textContent = completed
+    ? quizState.title
+    : `${quizState.queue.length} questions still unmastered in ${quizState.title}`;
+  const totalMs = timer.elapsedMs();
+  document.getElementById('stat-answered').textContent = answered;
+  document.getElementById('stat-correct').textContent = correct;
+  document.getElementById('stat-accuracy').textContent = accuracy + '%';
+  document.getElementById('stat-time').textContent = formatTime(totalMs);
+  const avgSec = answered ? Math.round((totalMs / 1000) / answered) : 0;
+  document.getElementById('stat-avg-time').textContent =
+    answered ? `Average ${avgSec}s per question` : '';
+
+  const earnedEl = document.getElementById('earned-medals');
+  earnedEl.innerHTML = earned.map(m => {
+    const def = MEDAL_DEFS[m];
+    return `<span class="medal ${def.cls}"><span class="ic">${def.ic}</span>New medal: ${def.label}</span>`;
+  }).join('');
+
+  showScreen('end');
+}
+
+document.getElementById('end-again').onclick = () => {
+  if (!quizState) { showScreen('home'); renderHome(); return; }
+  startQuiz(quizState.blocks, quizState.title);
+};
+document.getElementById('end-home').onclick = () => {
+  quizState = null;
+  showScreen('home');
+  renderHome();
+};
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+// ---- boot ----
+renderHome();
+</script>
+
+</body>
+</html>

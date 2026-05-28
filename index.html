@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[SUBJECT] — A Study Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* One accent per block — supports up to 6 blocks, add more if needed */
+  --b1:#5b6cff;  --b1-soft:#eef0ff;   /* indigo */
+  --b2:#d97706;  --b2-soft:#fef3c7;   /* amber  */
+  --b3:#0d9488;  --b3-soft:#ccfbf1;   /* teal   */
+  --b4:#e11d48;  --b4-soft:#ffe4e6;   /* rose   */
+  --b5:#15803d;  --b5-soft:#dcfce7;   /* green  */
+  --b6:#7c3aed;  --b6-soft:#ede9fe;   /* purple */
+
+  --bg:#fbfaf7; --panel:#ffffff; --ink:#1c1c1f; --body:#2d2d33;
+  --muted:#6b7280; --line:#e8e6df; --soft:#f3f1ec; --accent:#1c1c1f;
+
+  --serif:'Fraunces', Georgia, serif;
+  --sans:'Inter', system-ui, sans-serif;
+  --mono:'Atkinson Hyperlegible', monospace;
+  --maxw:760px; --maxw-wide:1080px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{font-family:var(--serif);background:var(--bg);color:var(--body);line-height:1.65;font-size:18px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+img{max-width:100%;display:block}
+a{color:inherit}
+
+/* ── Sticky nav ─────────────────────────────────────────────────── */
+.nav{position:sticky;top:0;z-index:50;background:rgba(251,250,247,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);font-family:var(--sans)}
+.nav-inner{max-width:var(--maxw-wide);margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.nav-brand{font-family:var(--serif);font-weight:500;font-size:1rem;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.nav-brand i{font-style:italic;color:var(--muted);font-weight:400}
+.nav-links{display:flex;gap:6px;flex-wrap:wrap}
+.nav-link{text-decoration:none;font-size:.82rem;font-weight:600;padding:7px 11px;border-radius:6px;color:var(--muted);transition:color .15s, background-color .15s}
+.nav-link:hover,.nav-link.active{color:var(--ink);background:var(--soft)}
+.nav-link[data-block="1"].active{color:var(--b1);background:var(--b1-soft)}
+.nav-link[data-block="2"].active{color:var(--b2);background:var(--b2-soft)}
+.nav-link[data-block="3"].active{color:var(--b3);background:var(--b3-soft)}
+.nav-link[data-block="4"].active{color:var(--b4);background:var(--b4-soft)}
+.nav-link[data-block="5"].active{color:var(--b5);background:var(--b5-soft)}
+.nav-link[data-block="6"].active{color:var(--b6);background:var(--b6-soft)}
+
+.container{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+.container-wide{max-width:var(--maxw-wide);margin:0 auto;padding:0 24px}
+section{padding:64px 0}
+
+/* ── Hero ───────────────────────────────────────────────────────── */
+.hero{padding:80px 0 56px;background:linear-gradient(180deg, #fbfaf7 0%, #ffffff 100%);border-bottom:1px solid var(--line)}
+.hero-eyebrow{font-family:var(--sans);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:16px}
+.hero h1{font-family:var(--serif);font-size:clamp(2.4rem, 6vw, 3.8rem);font-weight:500;font-variation-settings:"opsz" 144;line-height:1.05;letter-spacing:-.02em;color:var(--ink);margin-bottom:18px}
+.hero h1 em{font-style:italic;color:var(--muted);font-weight:400}
+.hero .deck{font-size:1.15rem;color:var(--body);max-width:600px;line-height:1.55;margin-bottom:36px}
+.hero .meta{display:flex;gap:22px;font-family:var(--sans);font-size:.82rem;color:var(--muted);flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px;margin-top:14px}
+.hero .meta b{color:var(--ink);font-weight:600}
+.hero-tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.tool-btn{font-family:var(--sans);font-size:.86rem;font-weight:600;padding:10px 16px;border-radius:6px;text-decoration:none;border:1px solid var(--ink);color:var(--ink);background:transparent;transition:background-color .15s, color .15s}
+.tool-btn:hover{background:var(--ink);color:var(--bg)}
+.tool-btn.filled{background:var(--ink);color:var(--bg)}
+.tool-btn.filled:hover{background:transparent;color:var(--ink)}
+.journey-wrap{margin-top:48px}
+.journey-label{font-family:var(--sans);font-size:.78rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:14px;text-align:center}
+.journey{width:100%;height:auto;display:block}
+
+/* ── Section labels & headings ──────────────────────────────────── */
+.section-label{font-family:var(--sans);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:8px}
+h2{font-family:var(--serif);font-size:clamp(1.9rem, 4vw, 2.6rem);font-weight:500;font-variation-settings:"opsz" 144;line-height:1.15;letter-spacing:-.015em;color:var(--ink);margin-bottom:14px}
+h3{font-family:var(--serif);font-size:1.5rem;font-weight:600;line-height:1.25;letter-spacing:-.01em;color:var(--ink);margin:36px 0 12px}
+h4{font-family:var(--sans);font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink);margin:24px 0 10px}
+.lead{font-family:var(--serif);font-style:italic;font-size:1.18rem;color:var(--body);line-height:1.55;margin-bottom:32px}
+p{margin-bottom:18px}
+p strong{color:var(--ink);font-weight:600}
+p em{font-style:italic}
+ul,ol{margin:0 0 18px 22px}
+li{margin-bottom:8px}
+li strong{color:var(--ink)}
+
+/* ── Big-picture section ────────────────────────────────────────── */
+.big-picture{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.big-picture-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;margin-top:32px}
+@media (max-width:780px){.big-picture-grid{grid-template-columns:1fr;gap:32px}}
+.diagram-card{border:1px solid var(--line);border-radius:10px;padding:24px;background:#fff}
+.diagram-card h4{margin-top:0;margin-bottom:14px}
+.diagram-card svg{width:100%;height:auto;display:block;margin:8px 0}
+.diagram-caption{font-family:var(--sans);font-size:.82rem;color:var(--muted);margin-top:12px;font-style:italic}
+
+/* ── Chapter (per block) ────────────────────────────────────────── */
+.chapter{padding:80px 0 64px;border-bottom:1px solid var(--line);position:relative}
+.chapter-eyebrow{font-family:var(--sans);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.18em;margin-bottom:14px}
+.chapter[data-block="1"] .chapter-eyebrow{color:var(--b1)}
+.chapter[data-block="2"] .chapter-eyebrow{color:var(--b2)}
+.chapter[data-block="3"] .chapter-eyebrow{color:var(--b3)}
+.chapter[data-block="4"] .chapter-eyebrow{color:var(--b4)}
+.chapter[data-block="5"] .chapter-eyebrow{color:var(--b5)}
+.chapter[data-block="6"] .chapter-eyebrow{color:var(--b6)}
+.chapter h2 .num{font-family:var(--sans);font-weight:700;font-size:.45em;vertical-align:middle;padding:4px 9px;border-radius:5px;margin-right:14px;position:relative;top:-4px}
+.chapter[data-block="1"] h2 .num{background:var(--b1-soft);color:var(--b1)}
+.chapter[data-block="2"] h2 .num{background:var(--b2-soft);color:var(--b2)}
+.chapter[data-block="3"] h2 .num{background:var(--b3-soft);color:var(--b3)}
+.chapter[data-block="4"] h2 .num{background:var(--b4-soft);color:var(--b4)}
+.chapter[data-block="5"] h2 .num{background:var(--b5-soft);color:var(--b5)}
+.chapter[data-block="6"] h2 .num{background:var(--b6-soft);color:var(--b6)}
+
+/* ── Mindmap ────────────────────────────────────────────────────── */
+.mindmap{margin:32px 0 40px;padding:32px 24px;background:#fff;border:1px solid var(--line);border-radius:14px}
+.mindmap-title{font-family:var(--sans);font-size:.78rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);text-align:center;margin-bottom:24px}
+.mm-center{display:flex;justify-content:center;margin-bottom:0}
+.mm-node-main{font-family:var(--serif);font-weight:600;font-size:1.2rem;color:var(--ink);padding:14px 26px;border:2px solid var(--ink);border-radius:999px;background:#fff}
+.mm-branches{display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px;margin-top:28px;position:relative}
+.mm-branch{padding:16px 18px;border-radius:10px;font-family:var(--sans)}
+.mm-branch h5{font-family:var(--sans);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px;color:inherit}
+.mm-branch ul{margin:0 0 0 16px;font-family:var(--sans)}
+.mm-branch li{font-size:.86rem;line-height:1.45;color:var(--body);margin-bottom:4px}
+.mm-branch li b{color:var(--ink);font-weight:600}
+.chapter[data-block="1"] .mm-branch{background:var(--b1-soft);color:var(--b1)}
+.chapter[data-block="2"] .mm-branch{background:var(--b2-soft);color:var(--b2)}
+.chapter[data-block="3"] .mm-branch{background:var(--b3-soft);color:var(--b3)}
+.chapter[data-block="4"] .mm-branch{background:var(--b4-soft);color:var(--b4)}
+.chapter[data-block="5"] .mm-branch{background:var(--b5-soft);color:var(--b5)}
+.chapter[data-block="6"] .mm-branch{background:var(--b6-soft);color:var(--b6)}
+
+/* ── Framework spotlight cards ──────────────────────────────────── */
+.spotlight{margin:24px 0;padding:24px;background:#fff;border:1px solid var(--line);border-radius:10px}
+.spotlight-head{display:flex;align-items:baseline;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+.spotlight-name{font-family:var(--serif);font-size:1.15rem;font-weight:600;color:var(--ink)}
+.spotlight-author{font-family:var(--sans);font-size:.78rem;color:var(--muted);font-style:italic}
+.spotlight-tag{font-family:var(--sans);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 8px;border-radius:4px}
+.chapter[data-block="1"] .spotlight-tag{background:var(--b1-soft);color:var(--b1)}
+.chapter[data-block="2"] .spotlight-tag{background:var(--b2-soft);color:var(--b2)}
+.chapter[data-block="3"] .spotlight-tag{background:var(--b3-soft);color:var(--b3)}
+.chapter[data-block="4"] .spotlight-tag{background:var(--b4-soft);color:var(--b4)}
+.chapter[data-block="5"] .spotlight-tag{background:var(--b5-soft);color:var(--b5)}
+.chapter[data-block="6"] .spotlight-tag{background:var(--b6-soft);color:var(--b6)}
+.spotlight-summary{font-family:var(--serif);font-style:italic;color:var(--muted);margin-bottom:14px;font-size:1rem}
+.spotlight-body{font-family:var(--sans);font-size:.92rem;line-height:1.55}
+.spotlight-body ul{margin:8px 0 0 18px}
+.spotlight-body li{margin-bottom:4px}
+.spotlight-body strong{color:var(--ink)}
+.spotlight-viz{margin:18px 0 6px}
+.spotlight-viz svg{width:100%;height:auto;display:block}
+
+/* ── Pull quote / callout / moves ───────────────────────────────── */
+.pull{margin:32px 0;padding:24px 28px;border-left:4px solid var(--ink);background:#fff;font-family:var(--serif);font-style:italic;font-size:1.1rem;line-height:1.55;color:var(--body)}
+.chapter[data-block="1"] .pull{border-left-color:var(--b1)}
+.chapter[data-block="2"] .pull{border-left-color:var(--b2)}
+.chapter[data-block="3"] .pull{border-left-color:var(--b3)}
+.chapter[data-block="4"] .pull{border-left-color:var(--b4)}
+.chapter[data-block="5"] .pull{border-left-color:var(--b5)}
+.chapter[data-block="6"] .pull{border-left-color:var(--b6)}
+.pull cite{display:block;font-style:normal;font-family:var(--sans);font-size:.78rem;color:var(--muted);margin-top:10px;text-transform:uppercase;letter-spacing:.08em}
+
+.callout{margin:32px 0;padding:24px 28px;border:1px dashed var(--line);border-radius:10px;background:#fff}
+.callout h4{margin-top:0}
+.callout ul{font-family:var(--sans);font-size:.92rem}
+
+.moves{margin:32px 0 0;padding:24px 28px;border-radius:10px;background:var(--soft)}
+.moves h4{margin-top:0}
+.moves ul{font-family:var(--sans);font-size:.92rem;list-style:none;margin-left:0}
+.moves li{padding-left:24px;position:relative;margin-bottom:8px;line-height:1.55}
+.moves li::before{content:"→";position:absolute;left:0;top:0;font-weight:700;color:var(--ink)}
+.chapter[data-block="1"] .moves li::before{color:var(--b1)}
+.chapter[data-block="2"] .moves li::before{color:var(--b2)}
+.chapter[data-block="3"] .moves li::before{color:var(--b3)}
+.chapter[data-block="4"] .moves li::before{color:var(--b4)}
+.chapter[data-block="5"] .moves li::before{color:var(--b5)}
+.chapter[data-block="6"] .moves li::before{color:var(--b6)}
+
+/* ── Vertical timeline (authors) ────────────────────────────────── */
+.timeline-section{background:#fff;border-top:1px solid var(--line)}
+.timeline{position:relative;max-width:680px;margin:32px auto 0;padding-left:32px;border-left:2px solid var(--line)}
+.tl-decade{position:relative;padding:18px 0 8px 18px;margin-bottom:12px}
+.tl-decade::before{content:"";position:absolute;left:-40px;top:24px;width:14px;height:14px;background:var(--ink);border-radius:50%;border:3px solid var(--bg)}
+.tl-decade h4{font-family:var(--sans);font-size:.95rem;font-weight:700;margin:0 0 10px;color:var(--ink);text-transform:none;letter-spacing:0}
+.tl-decade ul{font-family:var(--sans);font-size:.88rem;color:var(--body);list-style:none;margin-left:0}
+.tl-decade li{margin-bottom:6px}
+.tl-decade li b{color:var(--ink)}
+
+footer{padding:48px 0 64px;text-align:center;color:var(--muted);font-family:var(--sans);font-size:.84rem;background:var(--bg);border-top:1px solid var(--line)}
+footer a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+
+@media (max-width:600px){body{font-size:17px}.hero{padding:48px 0 32px}section{padding:48px 0}.chapter{padding:56px 0 48px}.mindmap{padding:24px 16px}.spotlight{padding:18px}.nav-links{gap:2px}.nav-link{padding:6px 8px;font-size:.76rem}}
+</style>
+</head>
+<body>
+
+<!--
+═════════════════════════════════════════════════════════════════════════════
+  STUDY COMPANION TEMPLATE — book-style single-page guide per subject
+─────────────────────────────────────────────────────────────────────────────
+  STRUCTURE TO FILL IN:
+  1. Hero (title + deck + optional journey timeline SVG)
+  2. "Big picture" section (1-2 grand frameworks introduced first)
+  3. ONE <article class="chapter" data-block="N" id="blockN"> PER BLOCK:
+     - Eyebrow + numbered title + italic lead
+     - Mindmap (.mindmap > .mm-center > .mm-node-main + .mm-branches > .mm-branch)
+     - .spotlight cards for EVERY framework in the block (name + author + tag +
+       summary + bullets, optional SVG diagram in .spotlight-viz)
+     - .pull quotes from key authors
+     - .callout for cases / debates
+     - .moves with → bullets for exam strategy
+  4. Authors timeline (decade-by-decade)
+  5. Footer
+
+  See ../C8/People Management/people-management/index.html (lorepini.github.io/people-management/)
+  for the populated reference — 4400+ lines, 90 spotlights across 6 chapters.
+
+  All CSS classes you need are defined above. data-block="N" drives all the
+  color theming automatically.
+═════════════════════════════════════════════════════════════════════════════
+-->
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#top" class="nav-brand">Marketing Trends <i>· a study companion</i></a>
+    <div class="nav-links">
+      <a href="#picture" class="nav-link">Big picture</a>
+      <a href="#block1" class="nav-link" data-block="1">DMS</a>
+      <a href="#block2" class="nav-link" data-block="2">Journey</a>
+      <a href="#block3" class="nav-link" data-block="3">Social</a>
+      <a href="#block4" class="nav-link" data-block="4">Paid</a>
+      <a href="#block5" class="nav-link" data-block="5">SEO</a>
+      <a href="#block6" class="nav-link" data-block="6">Content</a>
+      <a href="#exam-tips" class="nav-link">MCQ tips</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="container">
+    <div class="hero-eyebrow">A study companion · ESADE C8 · Marketing Trends</div>
+    <h1>Marketing Trends <em>— from goals to growth</em></h1>
+    <p class="deck">Seven sessions, one logic: set goals you can measure, choose channels you can balance, build content people want to share. This is the digital marketing strategy stack — owned, paid, earned — and how to make it work without burning budget on noise.</p>
+    <div class="meta">
+      <span><b>6</b> blocks</span>
+      <span><b>~22</b> core frameworks</span>
+      <span><b>SMART</b> · <b>3H</b> · <b>E-A-T</b> · <b>4Cs</b></span>
+    </div>
+  </div>
+</header>
+
+<section class="big-picture" id="picture">
+  <div class="container">
+    <div class="section-label">§ 0 — The big picture</div>
+    <h2>Two maps that anchor the whole course</h2>
+    <p class="lead">Everything in marketing trends sits on one of two diagrams: the Owned / Paid / Earned channel triangle, and the Awareness → Lead → Conversion → Retention funnel.</p>
+    <div class="big-picture-grid">
+      <div class="diagram-card">
+        <h4>The 3-channel mix · Owned · Paid · Earned</h4>
+        <svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif">
+          <polygon points="300,20 540,200 60,200" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+          <text x="300" y="60" text-anchor="middle" font-size="14" font-weight="700" fill="#1c1c1f">OWNED</text>
+          <text x="300" y="78" text-anchor="middle" font-size="10" fill="#6b7280">website · email · SEO · org. social</text>
+          <text x="475" y="190" text-anchor="middle" font-size="14" font-weight="700" fill="#1c1c1f">PAID</text>
+          <text x="475" y="204" text-anchor="middle" font-size="10" fill="#6b7280">ads · search · display</text>
+          <text x="125" y="190" text-anchor="middle" font-size="14" font-weight="700" fill="#1c1c1f">EARNED</text>
+          <text x="125" y="204" text-anchor="middle" font-size="10" fill="#6b7280">reviews · UGC · mentions · WOM</text>
+        </svg>
+        <p class="diagram-caption">Balancing the three is the central job of a Digital Marketing Strategy (DMS).</p>
+      </div>
+      <div class="diagram-card">
+        <h4>The funnel of marketing goals</h4>
+        <svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif">
+          <polygon points="40,40 560,40 460,180 140,180" fill="#eef0ff" stroke="#5b6cff" stroke-width="2"/>
+          <line x1="170" y1="75" x2="430" y2="75" stroke="#5b6cff" stroke-dasharray="4 3"/>
+          <line x1="200" y1="110" x2="400" y2="110" stroke="#5b6cff" stroke-dasharray="4 3"/>
+          <line x1="230" y1="145" x2="370" y2="145" stroke="#5b6cff" stroke-dasharray="4 3"/>
+          <text x="300" y="60" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1c1f">1. AWARENESS — they don't know you yet</text>
+          <text x="300" y="95" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1c1f">2. LEAD GEN — capture interest</text>
+          <text x="300" y="130" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1c1f">3. CONVERSION — they pay</text>
+          <text x="300" y="165" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1c1f">4. RETENTION — they come back</text>
+        </svg>
+        <p class="diagram-caption">Each layer of the funnel needs different channels, content and metrics.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════════════════
+     BLOCK 1 — Digital Marketing Strategy & SMART
+     ═════════════════════════════════════════════════════════════════════════ -->
+<article class="chapter" id="block1" data-block="1">
+  <div class="container">
+    <div class="chapter-eyebrow">Chapter one · Block 1 — Strategy & Goals</div>
+    <h2><span class="num">01</span>What is digital marketing — and how do we set goals?</h2>
+    <p class="lead">"Digital marketing" is not a separate discipline. It is marketing done through channels where the customer talks back.</p>
+    <p>The opening session reframes a common confusion: digital is a <strong>channel</strong>, not a separate kind of marketing. The activity stays the same — create, communicate, deliver and exchange value. What changes is that the flow becomes <strong>bidirectional</strong> (Company ↔ Consumers), price becomes dynamic, products can be co-created, and the customer journey is roughly <strong>70% digital</strong>.</p>
+
+    <div class="mindmap">
+      <div class="mindmap-title">Mindmap — the territory of Block 1</div>
+      <div class="mm-center"><div class="mm-node-main">DMS = Goals + Channels + Tactics + Value creation</div></div>
+      <div class="mm-branches">
+        <div class="mm-branch">
+          <h5>Marketing definition</h5>
+          <ul>
+            <li><b>AMA 2017</b> — creating, communicating, delivering, exchanging value</li>
+            <li><b>Practical</b> — reach a segment, solve a real problem, connect emotionally</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Meaningful brands · Havas</h5>
+          <ul>
+            <li>75% of brands could disappear — nobody would care</li>
+            <li>3 pillars × 14 dimensions: Personal · Collective · Functional</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Channel mix</h5>
+          <ul>
+            <li><b>Owned</b> — full control (SEO, email)</li>
+            <li><b>Paid</b> — bought visibility (ads)</li>
+            <li><b>Earned</b> — community-driven (reviews, UGC)</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Goals funnel</h5>
+          <ul>
+            <li>Awareness → top of funnel</li>
+            <li>Lead → onboard potential</li>
+            <li>Conversion → first sale</li>
+            <li>Retention → repeat / minimise churn</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Value ladder</h5>
+          <ul>
+            <li>Attributes (reason to believe)</li>
+            <li>Product benefits</li>
+            <li>Emotional benefits</li>
+            <li>Brand values</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Era shifts</h5>
+          <ul>
+            <li><b>COVID</b> — accelerated digitization, +80% open to digital</li>
+            <li><b>AI</b> — speed, automation; <em>Parrot Effect</em> = homogenization</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h3>The frameworks worth knowing cold</h3>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">SMART goals</span>
+        <span class="spotlight-author">Doran (1981)</span>
+        <span class="spotlight-tag">Core</span>
+      </div>
+      <div class="spotlight-summary">A vague intention is not a goal. A SMART goal is specific, measurable, actionable, relevant and time-based.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Specific</b> — answer the 5 W's (who/what/when/where/why)</li>
+          <li><b>Measurable</b> — what metric tells you it worked</li>
+          <li><b>Actionable</b> — realistic given existing baselines</li>
+          <li><b>Relevant</b> — tied to business objectives, not vanity</li>
+          <li><b>Time-based</b> — a clear deadline ("within 3 months")</li>
+          <li><b>Exam move</b> — never say "increase brand awareness". Say "raise top-of-mind recall by 5% in Q4 vs Q3 baseline".</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Meaningful Brands</span>
+        <span class="spotlight-author">Havas Media Group</span>
+        <span class="spotlight-tag">Key</span>
+      </div>
+      <div class="spotlight-summary">75% of brands could vanish without consumers caring. Meaningful brands clear that bar by activating personal, collective and functional value.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Personal benefits</b> — physical, intellectual, social, emotional, financial, organisational, natural</li>
+          <li><b>Collective benefits</b> — ethics, environment, social justice, economy, employer brand</li>
+          <li><b>Functional benefits</b> — quality, service, innovation, tech (does what it promises)</li>
+          <li><b>Implication</b> — 48% of branded content is irrelevant. Volume ≠ communication. Quality of value matters more.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Value Ladder</span>
+        <span class="spotlight-author">Used in class</span>
+        <span class="spotlight-tag">Core</span>
+      </div>
+      <div class="spotlight-summary">Brand perception is a ladder built from product attributes up. Pull the bottom rung and the rest collapses.</div>
+      <div class="spotlight-viz">
+        <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif">
+          <rect x="40" y="160" width="520" height="28" fill="#eef0ff" stroke="#5b6cff"/>
+          <text x="300" y="178" text-anchor="middle" font-size="12" font-weight="700">1. Product attributes (Reason to Believe)</text>
+          <rect x="80" y="120" width="440" height="28" fill="#eef0ff" stroke="#5b6cff"/>
+          <text x="300" y="138" text-anchor="middle" font-size="12" font-weight="700">2. Product benefits</text>
+          <rect x="130" y="80" width="340" height="28" fill="#eef0ff" stroke="#5b6cff"/>
+          <text x="300" y="98" text-anchor="middle" font-size="12" font-weight="700">3. Emotional benefits</text>
+          <rect x="180" y="40" width="240" height="28" fill="#eef0ff" stroke="#5b6cff"/>
+          <text x="300" y="58" text-anchor="middle" font-size="12" font-weight="700">4. Brand values</text>
+        </svg>
+      </div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>RTB at the base</b> — if the product fails technically, the whole ladder collapses (LEGO that breaks in 2 days)</li>
+          <li><b>WhatsApp example</b> — emotional benefit = "everyone is there" (community + belonging)</li>
+          <li><b>Applies B2C and B2B</b> — Volvo trucks: precision attribute → stability benefit → trust emotion → safety value</li>
+          <li><b>Changing perception</b> — start by changing the attributes. Perception is sticky.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Goals funnel · Awareness → Lead → Conversion → Retention</span>
+        <span class="spotlight-author">Class framework</span>
+        <span class="spotlight-tag">Core</span>
+      </div>
+      <div class="spotlight-summary">Each rung needs a different message, channel and metric.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Awareness</b> — they don't know you. Build the brand emotionally. Paid channels dominate. KPI: top-of-mind recall, brand mentions. Example: Dove <em>Real Beauty Sketches</em> — no product shown.</li>
+          <li><b>Lead generation</b> — capture interest. Newsletter pop-ups, signups, Volvo's split-truck stability ad (B2B impact).</li>
+          <li><b>Conversion</b> — turn lead into payer. Discounts, retargeting, easy checkout (PayPal cuts cart abandonment).</li>
+          <li><b>Retention vs Churn</b> — keep them engaged (repeat purchase, email opens) vs lose them (unsubs, never return). Acquiring is far more expensive than retaining.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pull">
+      "Digital marketing does not exist — digital is a channel. The marketing we know stays the same; the delivery tools change."
+      <cite>Class principle · Session 1</cite>
+    </div>
+
+    <div class="callout case">
+      <h4>Cases that show up in MCQs</h4>
+      <ul>
+        <li><b>Dove · Real Beauty Sketches</b> — awareness through emotional connection (not conversion)</li>
+        <li><b>Brussels Airlines · Going the Extra Mile</b> — 15-year brand consistency</li>
+        <li><b>Volvo Trucks · Split</b> — Van Damme balance, B2B precision attribute → stability benefit</li>
+        <li><b>LEGO</b> — full ladder example (attributes = quality bricks → values = creativity)</li>
+      </ul>
+    </div>
+
+    <div class="moves">
+      <h4>Exam moves</h4>
+      <ul>
+        <li>If asked "what is digital marketing", say <em>the use of digital and social channels to promote a brand or reach consumers</em> — and emphasise that it is bidirectional.</li>
+        <li>Never reduce marketing to "the 4 Ps". The exam tests the customer-side reframe: 4 Cs = Customer solution, Cost, Communication, Convenience.</li>
+        <li>If asked about Havas Meaningful Brands, hit the headline number: <em>75% of brands could disappear</em>.</li>
+        <li>If asked about goal-setting, anchor on SMART and apply the 5 W's.</li>
+        <li>For the Value Ladder, always lead with: "the bottom rung is the reason to believe — pull it and the whole brand collapses".</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<!-- ═════════════════════════════════════════════════════════════════════════
+     BLOCK 2 — Customer Journey & Media Planning
+     ═════════════════════════════════════════════════════════════════════════ -->
+<article class="chapter" id="block2" data-block="2">
+  <div class="container">
+    <div class="chapter-eyebrow">Chapter two · Block 2 — Journey & Media Planning</div>
+    <h2><span class="num">02</span>The customer journey — and how to plan media around it</h2>
+    <p class="lead">The journey is no longer linear, and that breaks the old funnel. Today it loops.</p>
+    <p>Session 2 maps the journey twice — the traditional linear funnel (Awareness → Consideration → Purchase → Loyalty) and the social customer journey, where the consumer holds the power and the brand controls less of the message. Then it asks the operational question: <strong>which channel, for which audience, at which moment?</strong></p>
+
+    <div class="mindmap">
+      <div class="mindmap-title">Mindmap — the territory of Block 2</div>
+      <div class="mm-center"><div class="mm-node-main">Customer Journey + Media Plan</div></div>
+      <div class="mm-branches">
+        <div class="mm-branch">
+          <h5>Traditional journey</h5>
+          <ul>
+            <li>Awareness → Consideration → Purchase → Loyalty</li>
+            <li>Brand controls the message</li>
+            <li>Few channels, limited info</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Social journey</h5>
+          <ul>
+            <li>Consumers loop, search, ask peers</li>
+            <li>Brand <em>influences</em>, doesn't control</li>
+            <li>Reviews and UGC redirect decisions</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Media planning principles</h5>
+          <ul>
+            <li>The right <b>audience</b></li>
+            <li>The right <b>instrument</b></li>
+            <li>The right <b>time</b> + the right <b>channel</b></li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Segmentation</h5>
+          <ul>
+            <li>Existing customers (retain)</li>
+            <li>New potential customers (acquire)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Linear vs. Social Customer Journey</span>
+        <span class="spotlight-author">Class framework</span>
+        <span class="spotlight-tag">Core</span>
+      </div>
+      <div class="spotlight-summary">Old: a tidy funnel. New: a loop where customers search peers before they search the brand.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Traditional</b> — Need recognition → Information search → Alternatives → Purchase → Post-purchase</li>
+          <li><b>Social</b> — Pre-purchase research happens on review sites, social media, peer messaging — long before the brand gets to speak.</li>
+          <li><b>Loyalty phase</b> — DTC and retention strategies skip the front of the funnel: returning customer = lower acquisition cost.</li>
+          <li><b>Exam move</b> — when the question contrasts "traditional vs digital", anchor on <em>bidirectionality</em>, <em>customer control</em>, and <em>multi-channel</em>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Principles of media planning</span>
+        <span class="spotlight-author">Class framework</span>
+        <span class="spotlight-tag">Key</span>
+      </div>
+      <div class="spotlight-summary">A media plan answers four questions before it spends a euro.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Which audiences resonate most</b> — segment first, broadcast later</li>
+          <li><b>Right channel</b> — different goals live on different platforms (B2B → LinkedIn, mass awareness → TikTok/Instagram)</li>
+          <li><b>Right instrument</b> — match tactic to goal (display ad ≠ paid search ≠ influencer)</li>
+          <li><b>Right time</b> — what's the customer's stage in their journey?</li>
+          <li><b>Metric</b> — must be measurable on the chosen channel (each channel has its own KPIs)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h4>Owned vs Paid vs Earned — the trade-off table</h4>
+      <ul>
+        <li><b>Owned</b> · ✅ full control · ❌ slow build, audience-investment required</li>
+        <li><b>Paid</b> · ✅ instant reach, controllable message · ❌ users skip / block / mistrust</li>
+        <li><b>Earned</b> · ✅ trustworthiness, perceived authenticity · ❌ no control — bad reviews can damage reputation</li>
+      </ul>
+    </div>
+
+    <div class="moves">
+      <h4>Exam moves</h4>
+      <ul>
+        <li>If asked about loyalty stages, say <em>retention focuses on direct repurchase</em> — bypassing acquisition is the highest-ROI lever.</li>
+        <li>Don't confuse "earned" with "free". Earned media costs investments in building the audience and brand worth talking about.</li>
+        <li>For media planning questions, mention <em>segmentation</em> + <em>right audience + right channel + right time + measurable metric</em> as a 4-part answer.</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<!-- ═════════════════════════════════════════════════════════════════════════
+     BLOCK 3 — Social Media Planning + Analytics
+     ═════════════════════════════════════════════════════════════════════════ -->
+<article class="chapter" id="block3" data-block="3">
+  <div class="container">
+    <div class="chapter-eyebrow">Chapter three · Block 3 — Social Media & Analytics</div>
+    <h2><span class="num">03</span>Social media planning — Stakeholder Matrix, 3H content, KPIs</h2>
+    <p class="lead">Three elements (stakeholders, platforms, content) plus a fourth layer (social advertising) — measured against four KPIs.</p>
+    <p>Sessions 3 and 4 belong together: how to plan social media, and how to measure it. The strategy rests on a triangle (stakeholders + platforms + content), is amplified by social advertising, organised in a 3H content plan (Help / Hub / Hero), and rolled up into the ROI equation: Traffic × CR% × AVG × Repetition.</p>
+
+    <div class="mindmap">
+      <div class="mindmap-title">Mindmap — the territory of Block 3</div>
+      <div class="mm-center"><div class="mm-node-main">Stakeholders + Platforms + Content + Ads</div></div>
+      <div class="mm-branches">
+        <div class="mm-branch">
+          <h5>Generic social goals</h5>
+          <ul>
+            <li><b>B</b> — Branding</li>
+            <li><b>S</b> — Sales</li>
+            <li><b>CS</b> — Customer Support</li>
+            <li><b>R&D</b> — co-creation</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Stakeholder matrix</h5>
+          <ul>
+            <li>Customers Seg. 1 + 2</li>
+            <li>Journalists & bloggers</li>
+            <li>Influencers & agencies</li>
+            <li>Potential talent</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>3H content</h5>
+          <ul>
+            <li><b>Help</b> — daily, low cost, for fans</li>
+            <li><b>Hub</b> — community growth, medium freq.</li>
+            <li><b>Hero</b> — big-bang campaign, mass</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>4 KPIs</h5>
+          <ul>
+            <li><b>Traffic</b> — top of the funnel</li>
+            <li><b>CR%</b> — convert traffic to value</li>
+            <li><b>AVG</b> — order value</li>
+            <li><b>Repetition</b> — multiplies CLV</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Impact vs Effort</h5>
+          <ul>
+            <li>Easy wins → do first</li>
+            <li>Big bets → plan carefully</li>
+            <li>Money pit → avoid</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Ramp & Bump</h5>
+          <ul>
+            <li>Over-investing in performance hits a ceiling</li>
+            <li>Brand-building lifts the ceiling over time</li>
+            <li>Adidas, Nike: admitted the error · Airbnb: shifted</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">3H Content Strategy</span>
+        <span class="spotlight-author">Google/YouTube</span>
+        <span class="spotlight-tag">Core</span>
+      </div>
+      <div class="spotlight-summary">All branded content fits into three tiers: Help (everyday), Hub (community-growth), Hero (mass-reach moments).</div>
+      <div class="spotlight-viz">
+        <svg viewBox="0 0 600 180" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif">
+          <rect x="20" y="140" width="560" height="20" fill="#ccfbf1" stroke="#0d9488"/>
+          <text x="300" y="155" text-anchor="middle" font-size="11" font-weight="700">HELP — always-on baseline (fans)</text>
+          <rect x="120" y="80" width="360" height="50" fill="#ccfbf1" stroke="#0d9488"/>
+          <text x="300" y="110" text-anchor="middle" font-size="11" font-weight="700">HUB — periodic activations (clients)</text>
+          <polygon points="220,30 380,30 320,70 280,70" fill="#0d9488" stroke="#0d9488"/>
+          <text x="300" y="55" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">HERO (mass)</text>
+        </svg>
+      </div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Help</b> — low cost, high frequency, for existing fans. UGC and educational content (Heura, Caterpillar's <em>iAmCaterpillar</em>, Patagonia community photos).</li>
+          <li><b>Hub</b> — community growth: giveaways (follow + like + tag = exponential reach), influencer partnerships (Warby Parker, Sephora Squad), paid community ads.</li>
+          <li><b>Hero</b> — high investment, occasional, mass attention. Qatar Airways × Messi; Patagonia's <em>Don't Buy This Jacket</em>; Heura's "CARNE" billboards in Madrid.</li>
+          <li><b>Key rule</b> — Hero without Help and Hub is unsustainable: there is nothing to retain the audience after the peak.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Stakeholder Contact Matrix</span>
+        <span class="spotlight-author">Class framework</span>
+        <span class="spotlight-tag">Key</span>
+      </div>
+      <div class="spotlight-summary">A grid mapping each audience to top goal, top platform, paid investment, key messages and priority stars.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Customers Seg. 1</b> — Top goal: Branding · Top platform: Instagram · Paid: $$ · ★★★★</li>
+          <li><b>Customers Seg. 2</b> — Top goal: Sales · Top platform: Facebook · Paid: $$$ · ★★★</li>
+          <li><b>Journalists/Bloggers</b> — Top goal: Branding · Top platform: X (Twitter) · ★</li>
+          <li><b>Influencers/Agencies</b> — Top goal: Branding · Top platform: Instagram + LinkedIn · ★★</li>
+          <li><b>Potential talent</b> — Top goal: Branding · Top platform: LinkedIn · ★</li>
+          <li><b>Exam move</b> — when asked about social media strategy, never skip stakeholder definition. Goals follow stakeholders, not the other way around.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Digital Marketing KPI Model</span>
+        <span class="spotlight-author">Class framework</span>
+        <span class="spotlight-tag">Core</span>
+      </div>
+      <div class="spotlight-summary">Four KPIs drive the commercial performance of any digital business.</div>
+      <div class="spotlight-viz">
+        <svg viewBox="0 0 600 160" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif">
+          <rect x="20" y="60" width="120" height="40" fill="#ccfbf1" stroke="#0d9488" rx="6"/>
+          <text x="80" y="85" text-anchor="middle" font-size="12" font-weight="700">TRAFFIC</text>
+          <text x="160" y="85" text-anchor="middle" font-size="14">×</text>
+          <rect x="180" y="60" width="120" height="40" fill="#ccfbf1" stroke="#0d9488" rx="6"/>
+          <text x="240" y="85" text-anchor="middle" font-size="12" font-weight="700">CR%</text>
+          <text x="320" y="85" text-anchor="middle" font-size="14">×</text>
+          <rect x="340" y="60" width="120" height="40" fill="#ccfbf1" stroke="#0d9488" rx="6"/>
+          <text x="400" y="85" text-anchor="middle" font-size="12" font-weight="700">AVG</text>
+          <text x="480" y="85" text-anchor="middle" font-size="14">→</text>
+          <rect x="500" y="60" width="80" height="40" fill="#0d9488" stroke="#0d9488" rx="6"/>
+          <text x="540" y="85" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">ROI</text>
+          <path d="M 80 120 Q 80 145 540 145 Q 540 120 540 100" stroke="#0d9488" stroke-dasharray="4 3" fill="none"/>
+          <text x="300" y="140" text-anchor="middle" font-size="10" fill="#6b7280">REPETITION loops back — multiplies CLV</text>
+        </svg>
+      </div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Traffic</b> — volume coming to your asset. No traffic = no opportunity.</li>
+          <li><b>CR% (Conversion rate)</b> — visitors who complete the desired action. Small CR% gains have huge revenue impact.</li>
+          <li><b>AVG</b> — average order value. Drives revenue per converted user.</li>
+          <li><b>Repetition</b> — repeat purchases. Acquiring is far more expensive than retaining → highest-ROI lever.</li>
+          <li><b>Formula</b> — ROI = (Revenue − Cost) / Cost × 100%. Traffic × CR% = conversions; × AVG = revenue; × Repetition = CLV.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pull">
+      "Brand-building compounds over time and lifts the ceiling. Performance-only hits a ceiling — the Ramp & Bump."
+      <cite>Class principle · Adidas / Nike / Airbnb cases</cite>
+    </div>
+
+    <div class="callout case">
+      <h4>Real cases from the slides</h4>
+      <ul>
+        <li><b>Heura Foods</b> — plant-based brand, full 3H ecosystem (Help: educational posts; Hub: giveaways; Hero: provocative outdoor)</li>
+        <li><b>KLM</b> — Twitter customer support in real time (CS goal)</li>
+        <li><b>Starbucks · My Starbucks Idea</b> — crowdsourced R&D platform</li>
+        <li><b>Patagonia</b> — UGC reposts + "Don't Buy This Jacket" Hero</li>
+        <li><b>Adidas</b> — admitted over-investing in performance, neglected brand</li>
+      </ul>
+    </div>
+
+    <div class="moves">
+      <h4>Exam moves</h4>
+      <ul>
+        <li>When asked about social media strategy, lead with the triangle: <em>stakeholders + platforms + content</em>, then add social advertising as a fourth layer.</li>
+        <li>If asked about content frequency, anchor on 3H: Help (high), Hub (medium), Hero (low).</li>
+        <li>Don't memorise KPIs as a list. Show them as a chain: Traffic × CR% × AVG, with Repetition looping back to multiply CLV.</li>
+        <li>For the Ramp & Bump question, name brands: <em>Adidas and Nike admitted the error</em>; <em>Airbnb shifted</em>.</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<!-- ═════════════════════════════════════════════════════════════════════════
+     BLOCK 4 — Paid Media
+     ═════════════════════════════════════════════════════════════════════════ -->
+<article class="chapter" id="block4" data-block="4">
+  <div class="container">
+    <div class="chapter-eyebrow">Chapter four · Block 4 — Paid Media</div>
+    <h2><span class="num">04</span>Paid media — buying attention, by channel, by intent</h2>
+    <p class="lead">Paid media is not just "ads". It is bought distribution against measurable goals — search vs display vs social, each with its own logic.</p>
+    <p>Session 6 reframes paid media against owned and earned, then drills into the channel taxonomy. The principle: pay for the audience you can't reach organically, but only if the channel matches the goal.</p>
+
+    <div class="mindmap">
+      <div class="mindmap-title">Mindmap — the territory of Block 4</div>
+      <div class="mm-center"><div class="mm-node-main">Paid media · channel + creative + objective</div></div>
+      <div class="mm-branches">
+        <div class="mm-branch">
+          <h5>Paid search (SEM)</h5>
+          <ul>
+            <li>Google Ads, Bing Ads</li>
+            <li>Auction-based: bid + Quality Score</li>
+            <li>High intent — transactional queries</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Display</h5>
+          <ul>
+            <li>Banner ads on third-party sites</li>
+            <li>Lower intent — interruption-based</li>
+            <li>Visual creative, retargeting common</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Social ads</h5>
+          <ul>
+            <li>Meta, TikTok, LinkedIn, X, Pinterest</li>
+            <li>Objectives: Awareness, Traffic, Leads, Sales</li>
+            <li>Maps directly to B/S goal codes</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Programmatic</h5>
+          <ul>
+            <li>Automated buying at scale</li>
+            <li>RTB (real-time bidding)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Paid vs Owned vs Earned — the trade-off matrix</span>
+        <span class="spotlight-author">Class framework</span>
+        <span class="spotlight-tag">Core</span>
+      </div>
+      <div class="spotlight-summary">Three media types, three different cost/control/credibility profiles.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Paid</b> — fast, controllable, scalable; but users skip/block, ads have lower trust.</li>
+          <li><b>Owned</b> — full control of message and brand; but audiences need to be built (slow), maintenance-heavy.</li>
+          <li><b>Earned</b> — most trusted (perceived authentic); but uncontrolled — bad press, viral negativity.</li>
+          <li><b>Exam move</b> — when asked which to use, the answer is rarely "one". The answer is the <em>balance</em>, tied to the goal at each funnel stage.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Meta campaign objectives</span>
+        <span class="spotlight-author">Meta Ads Manager</span>
+        <span class="spotlight-tag">Supporting</span>
+      </div>
+      <div class="spotlight-summary">Each campaign objective maps to a goal (Branding or Sales).</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Awareness</b> — Branding · build reach</li>
+          <li><b>Traffic</b> — Branding/Sales bridge · drive to site</li>
+          <li><b>Engagement</b> — Branding · likes, shares</li>
+          <li><b>Leads</b> — Sales · form fills, sign-ups</li>
+          <li><b>App promotion</b> — Sales · installs, in-app actions</li>
+          <li><b>Sales</b> — Sales · purchases / conversions</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h4>Practical decisions when designing a paid creative</h4>
+      <ul>
+        <li><b>Intent</b> — match the creative to the journey stage (mass awareness ≠ retargeting CTA)</li>
+        <li><b>Channel native fit</b> — TikTok vertical / Pinterest pinnable / LinkedIn professional</li>
+        <li><b>Hook in 3 seconds</b> — mobile attention drops fast</li>
+        <li><b>Clear CTA</b> — one ask per ad</li>
+        <li><b>Measurement plan before launch</b> — what does success look like in numbers?</li>
+      </ul>
+    </div>
+
+    <div class="moves">
+      <h4>Exam moves</h4>
+      <ul>
+        <li>Don't confuse SEM (paid search) with SEO (organic search). One is paid; the other is owned.</li>
+        <li>For paid social campaigns, remember the objective ladder mirrors the funnel: Awareness → Traffic → Leads → Sales.</li>
+        <li>If asked why paid media has lower trust than earned, the answer is <em>controlled message</em> + <em>obvious commercial intent</em>.</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<!-- ═════════════════════════════════════════════════════════════════════════
+     BLOCK 5 — SEO
+     ═════════════════════════════════════════════════════════════════════════ -->
+<article class="chapter" id="block5" data-block="5">
+  <div class="container">
+    <div class="chapter-eyebrow">Chapter five · Block 5 — SEO</div>
+    <h2><span class="num">05</span>SEO — winning organic traffic without paying for the click</h2>
+    <p class="lead">Three pillars (relevance, popularity, user behaviour) sit on a foundation of technical hygiene. Add E-A-T for trust.</p>
+    <p>Session 7 covers SEO fundamentals — Google's PageRank legacy, modern ranking factors, the SERP anatomy, technical SEO, and the new wrinkle: optimizing for LLM answers (AEO / GEO). The principle: organic results are trusted more than paid, and SEO is the only channel where consistent traffic compounds for free.</p>
+
+    <div class="mindmap">
+      <div class="mindmap-title">Mindmap — the territory of Block 5</div>
+      <div class="mm-center"><div class="mm-node-main">SEO = Relevance + Popularity + User Behaviour + Technical</div></div>
+      <div class="mm-branches">
+        <div class="mm-branch">
+          <h5>Relevance</h5>
+          <ul>
+            <li>Keywords match intent (4 types)</li>
+            <li>Long-tail = easier to rank, more qualified</li>
+            <li>Freshness · ccTLD geo-targeting</li>
+            <li>❌ Keyword stuffing → penalty</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Popularity</h5>
+          <ul>
+            <li>Inbound links — most important signal</li>
+            <li>Mentions · social signals · brand searches</li>
+            <li>Quality &gt; quantity for backlinks</li>
+            <li>Avoid black-hat link schemes</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>User behaviour</h5>
+          <ul>
+            <li>Page speed · CTR · bounce rate</li>
+            <li>Mobile-first indexing</li>
+            <li>Accessible design</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>E-A-T</h5>
+          <ul>
+            <li>Expertise · Authoritativeness · Trustworthiness</li>
+            <li>Critical for YMYL sites (health, money)</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>SERP elements</h5>
+          <ul>
+            <li>Basic: top ads · organic links · more ads</li>
+            <li>Advanced: featured snippet · PLAs · knowledge cards · local pack · news box · related Qs</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Technical SEO</h5>
+          <ul>
+            <li>HTTPS · page speed · sitemaps · robots.txt</li>
+            <li>Optimised URLs (hyphens, not underscores)</li>
+            <li>301 vs 302 redirects</li>
+            <li>Schema.org via JSON-LD</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Keyword Intent — 4 types</span>
+        <span class="spotlight-author">Search intent framework</span>
+        <span class="spotlight-tag">Core</span>
+      </div>
+      <div class="spotlight-summary">Search queries reveal where the user is in the journey. Match content to intent.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Informational</b> — research/browsing ("how to choose running shoes")</li>
+          <li><b>Navigational</b> — finding a specific brand ("Nike running shoes")</li>
+          <li><b>Commercial</b> — comparing options ("best running shoes for endurance")</li>
+          <li><b>Transactional</b> — ready to buy ("running shoes sale online")</li>
+          <li><b>Long-tail</b> — specific multi-word queries with high CTR and lower competition. Best target for new sites.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Technical SEO checklist</span>
+        <span class="spotlight-author">Google Webmaster Guidelines</span>
+        <span class="spotlight-tag">Key</span>
+      </div>
+      <div class="spotlight-summary">Seven non-content elements that make or break your rankings.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>1. HTTPS</b> — official ranking signal since 2014. Mandatory.</li>
+          <li><b>2. Page speed</b> — 25% leave after ~4s; +1s delay → −16% satisfaction. Direct ranking factor.</li>
+          <li><b>3. Robots & sitemaps</b> — XML sitemap, href links, robots.txt. Cloaking = penalty.</li>
+          <li><b>4. URLs</b> — keyword-focused, unique, short, hyphens (not underscores). 301 (permanent, passes authority) vs 302 (temporary, doesn't).</li>
+          <li><b>5. Canonicalization</b> — rel=canonical for duplicate content.</li>
+          <li><b>6. Structured data</b> — Schema.org via JSON-LD (Google's preferred format). Enables rich snippets.</li>
+          <li><b>7. Mobile-first</b> — Google indexes mobile version primarily.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">E-A-T</span>
+        <span class="spotlight-author">Google Quality Raters Guidelines</span>
+        <span class="spotlight-tag">Key</span>
+      </div>
+      <div class="spotlight-summary">Especially load-bearing for YMYL ("Your Money Your Life") — health, finance, legal, safety.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Expertise</b> — author with genuine subject knowledge</li>
+          <li><b>Authoritativeness</b> — site recognised in the field</li>
+          <li><b>Trustworthiness</b> — secure, transparent, accurate</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h4>AI is reshaping SEO — the new acronyms</h4>
+      <ul>
+        <li><b>Hybrid wins</b> — Reisenbichler 2022 (Marketing Science): humans + AI for content beats human-only and AI-only. ~91% lower labour cost; no readability loss.</li>
+        <li><b>oLLM traffic</b> — Kaiser & Schulze 2025: ChatGPT referrals convert better than paid social but worse than other traditional channels.</li>
+        <li><b>AEO / GEO</b> — Answer / Generative Engine Optimization. The new layer on top of SEO: optimize for LLM citations by being authoritative, clear, well-structured.</li>
+      </ul>
+    </div>
+
+    <div class="moves">
+      <h4>Exam moves</h4>
+      <ul>
+        <li>If asked about ranking factors, name three pillars: <em>relevance + popularity + user behaviour</em>. Add technical SEO as the foundation.</li>
+        <li>For keyword strategy, mention <em>long-tail keywords</em> for new sites: less competition, higher CTR, more qualified traffic.</li>
+        <li>If asked about backlinks, the rule is <em>quality over quantity</em> + avoid black-hat schemes.</li>
+        <li>Distinguish 301 (permanent + passes authority) from 302 (temporary + does not). This is a classic distractor pair.</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<!-- ═════════════════════════════════════════════════════════════════════════
+     BLOCK 6 — Content Marketing
+     ═════════════════════════════════════════════════════════════════════════ -->
+<article class="chapter" id="block6" data-block="6">
+  <div class="container">
+    <div class="chapter-eyebrow">Chapter six · Block 6 — Content Marketing</div>
+    <h2><span class="num">06</span>Content marketing — formats, narratives, money</h2>
+    <p class="lead">Content is owned media's workhorse. It either compounds or it bleeds money. The strategy decides which.</p>
+    <p>Session 8 covers the full content lifecycle: choosing the format against journey + cognitive approach (the matrix), wrapping individual pieces inside a coherent brand narrative, applying storytelling archetypes, evaluating with the Valuable Content Checklist, then monetizing through three revenue models.</p>
+
+    <div class="mindmap">
+      <div class="mindmap-title">Mindmap — the territory of Block 6</div>
+      <div class="mm-center"><div class="mm-node-main">Create + Optimise + Monetise + Measure</div></div>
+      <div class="mm-branches">
+        <div class="mm-branch">
+          <h5>Format matrix</h5>
+          <ul>
+            <li><b>Entertain</b> — emotional × awareness</li>
+            <li><b>Inspire</b> — emotional × purchase</li>
+            <li><b>Educate</b> — rational × awareness</li>
+            <li><b>Convince</b> — rational × purchase</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Media richness</h5>
+          <ul>
+            <li># of cues</li>
+            <li>Modality (text → video)</li>
+            <li>Immediacy (sync/async)</li>
+            <li>Interactivity</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Valuable Content Checklist</h5>
+          <ul>
+            <li>Findable · Readable · Understandable · Actionable · Shareable</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Storytelling archetypes</h5>
+          <ul>
+            <li><b>Performer</b> — make you feel</li>
+            <li><b>Promoter</b> — old/trigger/new world</li>
+            <li><b>Professor</b> — challenge → thesis</li>
+            <li><b>Poet</b> — full belief change</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Monetisation</h5>
+          <ul>
+            <li>Selling content (memberships, products, freemium)</li>
+            <li>Selling information (data → GDPR risk)</li>
+            <li>Selling eyeballs (advertising)</li>
+          </ul>
+        </div>
+        <div class="mm-branch">
+          <h5>Double-edged sword</h5>
+          <ul>
+            <li>No strategy → bad leads</li>
+            <li>Inaccessible → churn</li>
+            <li>Repetitive → cognitive overload</li>
+            <li>Volume → waste</li>
+            <li>Poor maintenance → credibility loss</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Content Format Matrix</span>
+        <span class="spotlight-author">Smart Insights · class framework</span>
+        <span class="spotlight-tag">Core</span>
+      </div>
+      <div class="spotlight-summary">Two axes: cognitive approach (emotional ↔ rational) and journey goal (awareness ↔ purchase).</div>
+      <div class="spotlight-viz">
+        <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif">
+          <rect x="60" y="20" width="240" height="80" fill="#ede9fe" stroke="#7c3aed" rx="6"/>
+          <text x="180" y="50" text-anchor="middle" font-size="13" font-weight="700">ENTERTAIN</text>
+          <text x="180" y="70" text-anchor="middle" font-size="10" fill="#6b7280">virals, quizzes, games</text>
+          <text x="180" y="84" text-anchor="middle" font-size="10" fill="#6b7280">awareness × emotional</text>
+          <rect x="300" y="20" width="240" height="80" fill="#ede9fe" stroke="#7c3aed" rx="6"/>
+          <text x="420" y="50" text-anchor="middle" font-size="13" font-weight="700">INSPIRE</text>
+          <text x="420" y="70" text-anchor="middle" font-size="10" fill="#6b7280">celebrities, community</text>
+          <text x="420" y="84" text-anchor="middle" font-size="10" fill="#6b7280">purchase × emotional</text>
+          <rect x="60" y="100" width="240" height="80" fill="#ede9fe" stroke="#7c3aed" rx="6"/>
+          <text x="180" y="130" text-anchor="middle" font-size="13" font-weight="700">EDUCATE</text>
+          <text x="180" y="150" text-anchor="middle" font-size="10" fill="#6b7280">guides, infographics, articles</text>
+          <text x="180" y="164" text-anchor="middle" font-size="10" fill="#6b7280">awareness × rational</text>
+          <rect x="300" y="100" width="240" height="80" fill="#ede9fe" stroke="#7c3aed" rx="6"/>
+          <text x="420" y="130" text-anchor="middle" font-size="13" font-weight="700">CONVINCE</text>
+          <text x="420" y="150" text-anchor="middle" font-size="10" fill="#6b7280">case studies, demos, webinars</text>
+          <text x="420" y="164" text-anchor="middle" font-size="10" fill="#6b7280">purchase × rational</text>
+        </svg>
+      </div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Pick by stage</b> — there is no universally best format. Choose by cognitive approach + journey stage.</li>
+          <li><b>Mid-range formats</b> — articles, eBooks, eNews sit at the centre of the matrix (mixed goals).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Storytelling archetypes</span>
+        <span class="spotlight-author">Class framework</span>
+        <span class="spotlight-tag">Key</span>
+      </div>
+      <div class="spotlight-summary">From simplest to most complex: Performer → Promoter → Professor → Poet.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Performer</b> — "I want you to feel". Pure emotional stimulus. Anti-cruelty ads, fundraising.</li>
+          <li><b>Promoter</b> — "I want you to say yes". Old world → Trigger → New world. Product launches.</li>
+          <li><b>Professor</b> — "I want to change your view". Challenge → Implications → Why this → Thesis. B2B case studies, thought leadership.</li>
+          <li><b>Poet</b> — "I want to change your belief". Full arc: Human → Desire → Constriction → Resistance → Adventures → Relationships → Truth. Brand documentaries, social change.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">Valuable Content Checklist</span>
+        <span class="spotlight-author">Class framework</span>
+        <span class="spotlight-tag">Core</span>
+      </div>
+      <div class="spotlight-summary">Five dimensions every piece of content must satisfy before publishing.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>Findable</b> — h1 tag, metadata, ≥2 links in body, alt-tags on images</li>
+          <li><b>Readable</b> — inverted-pyramid, bullets, headers, chunking</li>
+          <li><b>Understandable</b> — user personas reflected, right format, intro for context</li>
+          <li><b>Actionable</b> — call to action, share invitation, related links, comments</li>
+          <li><b>Shareable</b> — emotional hook, share widgets, hashtag-ready</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="spotlight-head">
+        <span class="spotlight-name">3 Revenue Models for Content</span>
+        <span class="spotlight-author">Lambrecht et al. (2014)</span>
+        <span class="spotlight-tag">Supporting</span>
+      </div>
+      <div class="spotlight-summary">Content monetisation falls into three buckets, each with its own risk profile.</div>
+      <div class="spotlight-body">
+        <ul>
+          <li><b>1. Selling content</b> — memberships, products/services, freemium (Patreon, Ko-fi)</li>
+          <li><b>2. Selling information</b> — user-data sale (raises GDPR/ethical concerns)</li>
+          <li><b>3. Selling eyeballs</b> — advertising on owned channels (Reddit-style sponsored content)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h4>The five ways content backfires</h4>
+      <ul>
+        <li><b>No strategy</b> → attracts bad leads</li>
+        <li><b>Inaccessible</b> → churn (1bn people globally with disabilities)</li>
+        <li><b>Repetitive</b> → cognitive overload, disengagement</li>
+        <li><b>Volume over value</b> → wasted spend</li>
+        <li><b>Poor maintenance</b> → outdated content erodes credibility + SEO</li>
+      </ul>
+    </div>
+
+    <div class="moves">
+      <h4>Exam moves</h4>
+      <ul>
+        <li>If asked which content format to use, never give a single answer. Anchor on the matrix axes: <em>cognitive approach × journey stage</em>.</li>
+        <li>For brand narrative questions, distinguish <em>brand story</em> (timeless, aspirational, not SMART) from <em>brand's stories</em> (individual pieces, SMART-anchored).</li>
+        <li>Memorise the five checklist dimensions in order: Findable, Readable, Understandable, Actionable, Shareable.</li>
+        <li>Lambrecht's three revenue models are a classic essay scaffold: <em>content / information / eyeballs</em>.</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<!-- ═════════════════════════════════════════════════════════════════════════
+     EXAM TIPS
+     ═════════════════════════════════════════════════════════════════════════ -->
+<article class="chapter" id="exam-tips" data-block="2">
+  <div class="container">
+    <div class="chapter-eyebrow">Closing · MCQ exam tips</div>
+    <h2><span class="num">★</span>Twelve rules to attack the MCQ</h2>
+    <p class="lead">The pattern of distractors in this exam is consistent. These rules cover most of the traps.</p>
+
+    <div class="callout">
+      <h4>1 — Read the question carefully when "NOT" or "FALSE" appears</h4>
+      <p>A material fraction of stems are negatively framed. Misreading the negation is the most common avoidable error.</p>
+    </div>
+
+    <div class="callout">
+      <h4>2 — Differentiate close neighbours</h4>
+      <ul>
+        <li><b>4 Ps vs 4 Cs</b> — Product/Price/Place/Promotion vs Customer solution/Cost/Communication/Convenience</li>
+        <li><b>Blue Ocean vs Red Ocean</b> — non-customers + new demand vs current customers + existing demand</li>
+        <li><b>VR vs AR vs MR</b> — VR replaces reality; AR enhances it; MR sits between</li>
+        <li><b>Global vs International vs Local brands</b> — most companies use a <em>combination</em></li>
+        <li><b>SEO vs SEM</b> — owned vs paid</li>
+      </ul>
+    </div>
+
+    <div class="callout">
+      <h4>3 — "Both A and B" / "Neither A nor B" — usually the answer when both individual options sound plausible</h4>
+      <p>This is the professor's favourite pattern. If both A and B feel correct, pick "A and B are correct".</p>
+    </div>
+
+    <div class="callout">
+      <h4>4 — Innovation is about value, not just newness</h4>
+      <p>If asked "what is innovation from a marketing perspective", the answer involves <em>superior value proposition vs the competition</em> or <em>creating a new pattern of consumption</em>, not "a new product no matter what".</p>
+    </div>
+
+    <div class="callout">
+      <h4>5 — GloCal = balance, not a marketing-mix trick</h4>
+      <p>GloCal strategy means <em>balancing global and local</em>. It is NOT "using a global mix in local markets".</p>
+    </div>
+
+    <div class="callout">
+      <h4>6 — The Reckitt Benckiser growth model</h4>
+      <p>RB's key point in the slides is <em>investing in innovation and brand equity</em>. Not "only global brands" and not "only 20 fully local brands".</p>
+    </div>
+
+    <div class="callout">
+      <h4>7 — Lenovo's "blind strategy"</h4>
+      <p>Volume-first to extract better supplier costs — not "improving quality" or "focus groups". The innovation factor: <em>listening to customers AND understanding how they'll use the tech</em>.</p>
+    </div>
+
+    <div class="callout">
+      <h4>8 — Why did VR fail in the 90s?</h4>
+      <p>Neither users nor designers were ready. Not "product wasn't ready" alone or "customer wasn't ready" alone.</p>
+    </div>
+
+    <div class="callout">
+      <h4>9 — Value equation = benefits ÷ sacrifices</h4>
+      <p>Value is the relationship between <em>perceived benefits and perceived sacrifices</em>. NOT the relationship to a category-average price.</p>
+    </div>
+
+    <div class="callout">
+      <h4>10 — The marketplace today</h4>
+      <p>Competition is global AND customers are demanding/sophisticated → the answer is "A and B are correct". Almost always.</p>
+    </div>
+
+    <div class="callout">
+      <h4>11 — Marketing managers focus on…</h4>
+      <p>Both current customers AND non-customers. Never one alone. Same pattern as #10.</p>
+    </div>
+
+    <div class="callout">
+      <h4>12 — Length parity check</h4>
+      <p>If three options are roughly the same length and one is much longer or much shorter, suspect a leak — that one is often the correct answer (the professor explained too much) or the obvious distractor (over-specified to trap). Sanity-check against the framework.</p>
+    </div>
+
+    <div class="pull">
+      "If both individual options sound right, the answer is 'A and B are correct'. If neither sounds right, the answer is 'Neither A nor B'."
+      <cite>Pattern observed across the real test</cite>
+    </div>
+  </div>
+</article>
+
+<footer>
+  <div class="container">
+    <p>Companion to the <a href="mcq_trainer.html">MCQ trainer</a> · ESADE C8 · Marketing Trends.</p>
+  </div>
+</footer>
+
+<script>
+// Sticky nav: highlight current section as user scrolls
+const sections = document.querySelectorAll('section, article.chapter');
+const links = document.querySelectorAll('.nav-link');
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting){
+      const id = e.target.id;
+      links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
+    }
+  });
+}, { rootMargin: '-40% 0px -55% 0px' });
+sections.forEach(s => s.id && obs.observe(s));
+</script>
+
+</body>
+</html>
